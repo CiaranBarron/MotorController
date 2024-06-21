@@ -1,6 +1,13 @@
 import SerialDeviceBase
 import numpy as np
 
+"""
+:TO DO:
+- Finish read output / clear output function
+- setup the UI side of things
+- setup the serial comms identification to auto find board controlling the motor on the computer.
+- 
+"""
 
 
 class Motors(SerialDeviceBase.SerialDevice):
@@ -11,7 +18,7 @@ class Motors(SerialDeviceBase.SerialDevice):
         super.__init__()
 
         self._baudrate = 115200
-        self._description
+        # self._description - naming of the device (arduino nano every)
 
         # A and B positions. The motors will home when switched on. 
         self._Apos = 0
@@ -28,20 +35,20 @@ class Motors(SerialDeviceBase.SerialDevice):
         print("Connected.")
 
     def __exit__(self):
-        """Exit function for context manager. """
-        print("Motors disconnected.")
+        """Exit function for context manager. """    
         super().__exit__()
+        print("Motors disconnected.")
 
     def verify_positions(self, A,B):
         """Make sure that the values of A and B are within movement limits for the stage. """
 
-        # check minimum
+        # check steps >= minimum
         if A < 0:
             A = 0
         if B < 0:
             B = 0
 
-        # check maximum
+        # check steps <= maximum
         if A > self._stageAmax:
             A = self._stageAmax
         if B > self._stageBmax:
@@ -56,15 +63,21 @@ class Motors(SerialDeviceBase.SerialDevice):
 
     def update_positions(self, A, B):
         "update the positions of A and B"
-        A, B = self.verify_postiions(A, B)
+        A, B = self.verify_positions(A, B)
 
         self._Apos = A
         self._Bpos = B
+
+    def read_output(self):
+        """clear output buffer from the arduino """
+        # read_until -> check for enotyt string or timeout -> continue.
+        return None
 
     def move(self, A, B):
         """Take absolute positions to move the device to. (steps of motor)"""
         self.send(self.format_msg(A, B))
         self.update_positions(A, B)
+        self.read_output()
 
     def move_rel(self, A, B, dirA='left', dirB='up'):
         """Move the motors by a relative amount. (steps of motor)
@@ -86,6 +99,12 @@ class Motors(SerialDeviceBase.SerialDevice):
             newB = self._Bpos + B
         else: 
             newB = self._Bpos - B
+
+        self.send(self.format_msg(newA, newB))
+        self.update_positions(newA, newB)
+        self.read_output()
+
+    
 
         
             

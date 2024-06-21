@@ -67,6 +67,10 @@ class SerialDevice:
                 if self.description_id in sd.description:
                     print(f"Port: {sd.device} -> ID: {self.description_id}")
                     return sd.device
+                
+            if hasattr(self, 'description'):
+                if self.descrption in sd.description:
+                    return sd.device
 
             else: continue
         
