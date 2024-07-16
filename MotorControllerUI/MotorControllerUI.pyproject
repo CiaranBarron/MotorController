@@ -1,0 +1,9 @@
+{
+    "files": [
+        "motorcontrollerqt.py",
+        "form.ui",
+        "dialog_motorcontroller.h",
+        "dialog_motorcontroller.cpp",
+        "dialog_motorcontroller.ui"
+    ]
+}
