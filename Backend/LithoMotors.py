@@ -1,3 +1,5 @@
+# Ciaran Barron 16.07.24
+
 import SerialDeviceBase
 import numpy as np
 
@@ -14,8 +16,8 @@ class Motors(SerialDeviceBase.SerialDevice):
     """ Control motors moving stage on LMA310 lithography set up"""
 
     def __init__(self):
-
-        super.__init__()
+        """The init should also home the motors. Then they should be kept on for the remainder of the use time."""
+        super().__init__()
 
         self._baudrate = 115200
         # self._description - naming of the device (arduino nano every)
@@ -31,7 +33,7 @@ class Motors(SerialDeviceBase.SerialDevice):
     def __enter__(self):
         """Enter function for context manager"""
         print("Connecting to Motors...")
-        super().__enter__()
+        # super().__enter__()
         print("Connected.")
 
     def __exit__(self):
@@ -39,10 +41,19 @@ class Motors(SerialDeviceBase.SerialDevice):
         super().__exit__()
         print("Motors disconnected.")
 
-    def verify_positions(self, A,B):
+    def send(self, message, display=True):
+        # writing message to the serial device. printing sent messages to console.
+        try:
+            self.conn.write(bytes(message + "\n", 'UTF-8'))
+            if display:
+                print("sent\t\t->\t" + message)
+        except Exception as e:
+            print(repr(e))
+
+    def verify_positions(self, A, B):
         """Make sure that the values of A and B are within movement limits for the stage. """
 
-        # check steps >= minimum
+        # check steps >= minimum
         if A < 0:
             A = 0
         if B < 0:
@@ -58,8 +69,9 @@ class Motors(SerialDeviceBase.SerialDevice):
     
     def format_msg(self, A, B):
         """Take A and B positions (in motor steps) and format for the arduino"""
-        A, B = self.verify_positions(A, B)       
-        return "{\"stepsA\": {0}, \"stepsB\": {1}\}".format(A,B)
+        A, B = self.verify_positions(A, B)
+        print("{\"stepsA\": " + str(A) + ", \"stepsB\": " + str(B) + "}")
+        return "{\"stepsA\": {0}, \"stepsB\": {1}}".format(A,B)
 
     def update_positions(self, A, B):
         "update the positions of A and B"
@@ -103,8 +115,3 @@ class Motors(SerialDeviceBase.SerialDevice):
         self.send(self.format_msg(newA, newB))
         self.update_positions(newA, newB)
         self.read_output()
-
-    
-
-        
-            

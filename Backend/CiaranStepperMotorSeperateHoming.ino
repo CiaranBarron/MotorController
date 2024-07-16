@@ -58,10 +58,12 @@ void homeMotors() {
 
   motorA.setMaxSpeed(500);
   motorA.setAcceleration(500);
+  motorA.move(500); // avoid a scenario where the motor is already homed and just drives into the sensor
   motorA.moveTo(-1000000); // Move a large number of steps anticlockwise
 
   motorB.setMaxSpeed(500);
   motorB.setAcceleration(500);
+  motorB.move(500); // avoid a scenario where the motor is already homed and just drives into the sensor
   motorB.moveTo(-1000000); // Move a large number of steps anticlockwise
 
   // Attach interrupts to hall sensors
@@ -90,23 +92,6 @@ void homeMotors() {
       digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
   }
-
-  // home both motors at the same time.
-//   while (!homingCompleteA || !homingCompleteB) {
-//     if (!homingCompleteA) {
-//       motorA.run();
-//     }
-//     if (!homingCompleteB) {
-//       motorB.run();
-//     }
-//
-//     // Flash the LED at 1Hz while homing
-//     unsigned long currentMillis = millis();
-//     if (currentMillis - previousMillis >= interval) {
-//       previousMillis = currentMillis;
-//       digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-//     }
-//   }
 
   // Ensure the LED is off after homing
   digitalWrite(LED_PIN, LOW);

@@ -1,4 +1,6 @@
 # This Python file uses the following encoding: utf-8
+# Ciaran Barron 16.06.24
+
 import sys
 
 from PySide6.QtWidgets import QApplication, QWidget
@@ -9,13 +11,32 @@ from PySide6.QtWidgets import QApplication, QWidget
 #     pyside2-uic form.ui -o ui_form.py
 from ui_form import Ui_Dialog_MotorController
 
+# This line allows the file to see back up one directory because I have the motor control script in a different folder.
+sys.path.insert(1, '../Backend')
+import LithoMotors as LM
+
+# Create Motors object, interact via with statement which opens and closes connection.
+Motors = LM.Motors()
+
 class MotorControllerQt(QWidget):
+    '''Class for connecting the motors to the UI'''
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
-        self.ui.DO_IT.clicked.connect(self.doit_method)
 
+        # set values of spin boxes.
+        self._move_strength = 1 # number of steps no distances.
+        self._t = 0
+
+        # Click actions
+        self.ui.DO_IT.clicked.connect(self.doit_method)
+        self.ui.HOME.clicked.connect(self.home)
+        self.ui.LOAD_ROUTE.clicked.connect(self.load)
+        self.ui.UP.clicked.connect(self.move_up)
+        self.ui.DOWN.clicked.connect(self.move_down)
+        self.ui.LEFT.clicked.connect(self.move_left)
+        self.ui.RIGHT.clicked.connect(self.move_right)
 
     def doit_method(self):
         """
@@ -26,6 +47,12 @@ class MotorControllerQt(QWidget):
         return
 
     def home(self):
+        """Home the Motors. This should happen automatically in the arduino code at startup. Testing only."""
+        with Motors:
+            Motors.move(0,0)
+        return
+
+    def load(self):
         return
 
     def move_left(self):
@@ -45,9 +72,6 @@ class MotorControllerQt(QWidget):
         # Go and grab the name of the shape and load the pre-made file of positions.
         # Maybe auto generate
         return
-
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -107,6 +107,9 @@ class Ui_Dialog_MotorController(object):
     def retranslateUi(self, Dialog_MotorController):
         Dialog_MotorController.setWindowTitle(QCoreApplication.translate("Dialog_MotorController", u"Dialog", None))
         self.DO_IT.setText(QCoreApplication.translate("Dialog_MotorController", u"Do it!", None))
+#if QT_CONFIG(shortcut)
+        self.DO_IT.setShortcut(QCoreApplication.translate("Dialog_MotorController", u"Up", None))
+#endif // QT_CONFIG(shortcut)
         self.X_POS.setPlainText(QCoreApplication.translate("Dialog_MotorController", u"1 um", None))
         self.Y_POS.setPlainText(QCoreApplication.translate("Dialog_MotorController", u"1 um", None))
         self.NEW_MOTOR_POS_TEXT.setHtml(QCoreApplication.translate("Dialog_MotorController", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
@@ -120,6 +123,9 @@ class Ui_Dialog_MotorController(object):
         self.DOWN.setText(QCoreApplication.translate("Dialog_MotorController", u"DOWN", None))
         self.LEFT.setText(QCoreApplication.translate("Dialog_MotorController", u"LEFT", None))
         self.UP.setText(QCoreApplication.translate("Dialog_MotorController", u"UP", None))
+#if QT_CONFIG(shortcut)
+        self.UP.setShortcut(QCoreApplication.translate("Dialog_MotorController", u"Right", None))
+#endif // QT_CONFIG(shortcut)
 
         __sortingEnabled = self.listWidget.isSortingEnabled()
         self.listWidget.setSortingEnabled(False)

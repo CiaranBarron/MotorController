@@ -191,8 +191,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <widget class="QPushButton" name="LOAD_ROUTE">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>620</y>
+     <x>270</x>
+     <y>690</y>
      <width>100</width>
      <height>32</height>
     </rect>
