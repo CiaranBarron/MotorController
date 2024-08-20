@@ -8,9 +8,9 @@ class SerialDevice:
     Base Class for serial devices defining a context manager enter and exit which enables open/close with usage of comm port. 
     '''
 
-    def __init__(self):
-        self._port     = 'COM1'
-        self._baudrate = 9600
+    def __init__(self, port='COM1', baud_rate=9600):
+        self._port     = port
+        self._baudrate = baud_rate
         self._bytesize = serial.EIGHTBITS
         self._parity   = serial.PARITY_NONE
         self._stopbits = serial.STOPBITS_ONE
@@ -22,8 +22,9 @@ class SerialDevice:
         self._inter_byte_timeout = None
         self.conn = False
 
-    def __enter__(self, *args):
+    def __enter__(self, **kwargs):
         """run on open in using the with keyword - context management"""
+
         try:
             self.conn = serial.Serial(
                 port     = self._port, 
@@ -51,39 +52,27 @@ class SerialDevice:
             print("Connection closed.")
             print(self.conn)
 
-    def find_device_comport(self):
-        # Given a unique serial_number added to a subclass, find which com port it is on and return it.  
-        # loop over serial devices (sd) and check if id matches.
-        for sd in list_ports.comports():
-                        
-            if hasattr(self, 'serial_id'):
-                if sd.serial_number == self.serial_id:
-                    print(f"Port: {sd.device} -> ID: {self.serial_id}")
-                    return sd.device # unique serial_number, for agilent this value is AH01FH4QA
-            
-            # Avoiding the case where the arduino doesn't have a serial identifier. 
-            # Using a portion of the description instead.
-            if hasattr(self, 'description_id'):
-                if self.description_id in sd.description:
-                    print(f"Port: {sd.device} -> ID: {self.description_id}")
-                    return sd.device
-                
-            if hasattr(self, 'description'):
-                if self.descrption in sd.description:
-                    return sd.device
+    @staticmethod
+    def connected_com_devices():
+        """Loop over all connected devices and list out what information they have"""
+        for d in list_ports.comports():
+            print(d.__dict__)
 
-            else: continue
-        
-        return False
-    
-    def func_timer_ms(func):
-        def wrap_func(*args, **kwargs):
-            start = time.time_ns()
-            results = func(*args, **kwargs)
-            end = time.time_ns()
+    @staticmethod
+    def find_device_comport(attr, attr_value):
+        """find the comport the motors are connected to """
+        for d in list_ports.comports():
+            if hasattr(d, attr):
+                if getattr(d, attr) == attr_value:
+                    print(f"found device: {attr_value} at port {d.device}")
+                    return d.device
+            else:
+                print(f"Device {d} had no attribute {attr}.")
 
-            # !r converts to a repr of the preceding statement/function/var
-            runtime = round(1e-6*(end-start), 2)
-            print(f"Function {func.__name__!r} \t->\t{runtime} ms")
-            return results
-        return wrap_func
+if __name__ == "__main__":
+
+    SD = SerialDevice(port='COM5', baud_rate=115200)
+
+    device_port = SerialDevice.find_device_comport("serial_number", "FE9AF43E51514746324B2020FF0C3822")
+    print(device_port)
+

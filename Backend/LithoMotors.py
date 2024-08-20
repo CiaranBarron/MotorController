@@ -19,8 +19,12 @@ class Motors(SerialDeviceBase.SerialDevice):
         """The init should also home the motors. Then they should be kept on for the remainder of the use time."""
         super().__init__()
 
+        self._arudino_serial_number = "FE9AF43E51514746324B2020FF0C3822"
+        self._port = SerialDeviceBase.SerialDevice.find_device_comport(
+            "serial_number",
+            self._arudino_serial_number
+        )
         self._baudrate = 115200
-        # self._description - naming of the device (arduino nano every)
 
         # A and B positions. The motors will home when switched on. 
         self._Apos = 0
@@ -115,3 +119,7 @@ class Motors(SerialDeviceBase.SerialDevice):
         self.send(self.format_msg(newA, newB))
         self.update_positions(newA, newB)
         self.read_output()
+
+if __name__ == "__main__":
+    """Test that Motors behave as expected. Move to a middle position and perform scan action."""
+    M = Motors()
