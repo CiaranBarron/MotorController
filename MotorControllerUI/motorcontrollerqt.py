@@ -18,15 +18,16 @@ import LithoMotors as LM
 # Create Motors object, interact via with statement which opens and closes connection.
 Motors = LM.Motors()
 
+
 class MotorControllerQt(QWidget):
-    '''Class for connecting the motors to the UI'''
+    """Class for connecting the motors to the UI"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
 
         # set values of spin boxes.
-        self._move_strength = 1 # number of steps no distances.
+        self._move_strength = 10 # number of steps no distances.
         self._t = 0
 
         # Click actions
@@ -37,14 +38,31 @@ class MotorControllerQt(QWidget):
         self.ui.DOWN.clicked.connect(self.move_down)
         self.ui.LEFT.clicked.connect(self.move_left)
         self.ui.RIGHT.clicked.connect(self.move_right)
+        self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
+        self.ui.MOVE_MOTORS_ARROW_SETTING.valueChanged.connect(self.update_move_strength)  # does this change it?
 
     def doit_method(self):
         """
         Will use the move_left/right/up/down methods but also reference
         the values in the motor pos and current and target boxes.
         """
-        print('test')
+        self.ui.STAGE_FRAME.setWindowTitle(self._move_strength)
         return
+
+    def update_move_strength(self):
+        ms = self.ui.MOVE_MOTORS_ARROW_SETTING.value()
+
+        if ms < 0:
+            ms = 0
+        elif ms > 1000:
+            ms = 1000
+        else:
+            ms = 100
+
+        self._move_strength = ms
+        self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)
+
+        return None
 
     def home(self):
         """Home the Motors. This should happen automatically in the arduino code at startup. Testing only."""

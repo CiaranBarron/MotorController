@@ -58,12 +58,10 @@ void homeMotors() {
 
   motorA.setMaxSpeed(500);
   motorA.setAcceleration(500);
-  motorA.move(500); // avoid a scenario where the motor is already homed and just drives into the sensor
   motorA.moveTo(-1000000); // Move a large number of steps anticlockwise
 
   motorB.setMaxSpeed(500);
   motorB.setAcceleration(500);
-  motorB.move(500); // avoid a scenario where the motor is already homed and just drives into the sensor
   motorB.moveTo(-1000000); // Move a large number of steps anticlockwise
 
   // Attach interrupts to hall sensors
@@ -96,6 +94,7 @@ void homeMotors() {
   // Ensure the LED is off after homing
   digitalWrite(LED_PIN, LOW);
   Serial.println("Done");
+
 }
 
 void setup() {
@@ -115,9 +114,17 @@ void setup() {
   Serial.println("> RoR 2024");
   Serial.println("> After the motors home, set position using JSON: {\"stepsA\": X, \"stepsB\": Y}");
   Serial.println("> Pressing flashing button on front of device will stop movement in the event of an emergency. Holding for 5 seconds will force both motors to home");
- 
+
   // Home the motors at startup
   homeMotors();
+
+  // Move motors back a little from the sensor so it can home without running into the sensor next time.
+  motorA.moveTo(500);
+  motorB.moveTo(500);
+
+  motorA.run();
+  motorB.run();
+
 }
 
 void loop() {
@@ -128,7 +135,10 @@ void loop() {
       buttonPressTime = millis();
     } else if (millis() - buttonPressTime > 3000) {
       buttonHeld = true;
-      homeMotors();
+      motorA.moveTo(500);
+      motorB.moveTo(500);
+      motorA.run();
+      motorB.run();
       buttonHeld = false;
     }
   } else {
@@ -163,7 +173,7 @@ void loop() {
   }
 
   bool motorsMoving = motorA.distanceToGo() != 0 || motorB.distanceToGo() != 0;
-  
+
   // Run the motors to their target positions
   motorA.run();
   motorB.run();

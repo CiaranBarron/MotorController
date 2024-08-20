@@ -15,7 +15,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QListWidget,
+from PySide6.QtWidgets import (QApplication, QDialog, QGroupBox, QListWidget,
     QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy,
     QSpinBox, QTextEdit, QWidget)
 
@@ -33,11 +33,6 @@ class Ui_Dialog_MotorController(object):
         self.DO_IT = QPushButton(Dialog_MotorController)
         self.DO_IT.setObjectName(u"DO_IT")
         self.DO_IT.setGeometry(QRect(380, 500, 61, 32))
-        self.STAGE_FRAME = QFrame(Dialog_MotorController)
-        self.STAGE_FRAME.setObjectName(u"STAGE_FRAME")
-        self.STAGE_FRAME.setGeometry(QRect(30, 20, 411, 271))
-        self.STAGE_FRAME.setFrameShape(QFrame.StyledPanel)
-        self.STAGE_FRAME.setFrameShadow(QFrame.Raised)
         self.X_POS = QPlainTextEdit(Dialog_MotorController)
         self.X_POS.setObjectName(u"X_POS")
         self.X_POS.setGeometry(QRect(120, 480, 80, 30))
@@ -67,7 +62,7 @@ class Ui_Dialog_MotorController(object):
         self.listWidget.setGeometry(QRect(30, 610, 221, 111))
         self.LOAD_ROUTE = QPushButton(Dialog_MotorController)
         self.LOAD_ROUTE.setObjectName(u"LOAD_ROUTE")
-        self.LOAD_ROUTE.setGeometry(QRect(290, 620, 100, 32))
+        self.LOAD_ROUTE.setGeometry(QRect(270, 690, 100, 32))
         self.textEdit = QTextEdit(Dialog_MotorController)
         self.textEdit.setObjectName(u"textEdit")
         self.textEdit.setGeometry(QRect(120, 440, 80, 30))
@@ -98,6 +93,9 @@ class Ui_Dialog_MotorController(object):
         self.X_POS_4 = QPlainTextEdit(Dialog_MotorController)
         self.X_POS_4.setObjectName(u"X_POS_4")
         self.X_POS_4.setGeometry(QRect(290, 360, 50, 30))
+        self.groupBox = QGroupBox(Dialog_MotorController)
+        self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setGeometry(QRect(30, 70, 421, 231))
 
         self.retranslateUi(Dialog_MotorController)
 
@@ -183,5 +181,6 @@ class Ui_Dialog_MotorController(object):
         self.RIGHT.setText(QCoreApplication.translate("Dialog_MotorController", u"RIGHT", None))
         self.HOME.setText(QCoreApplication.translate("Dialog_MotorController", u"HOME", None))
         self.X_POS_4.setPlainText(QCoreApplication.translate("Dialog_MotorController", u"um", None))
+        self.groupBox.setTitle(QCoreApplication.translate("Dialog_MotorController", u"GroupBox", None))
     # retranslateUi
 

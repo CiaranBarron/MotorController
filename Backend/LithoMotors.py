@@ -33,7 +33,7 @@ class Motors(SerialDeviceBase.SerialDevice):
     def __enter__(self):
         """Enter function for context manager"""
         print("Connecting to Motors...")
-        # super().__enter__()
+        super().__enter__()
         print("Connected.")
 
     def __exit__(self):
