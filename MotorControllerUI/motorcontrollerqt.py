@@ -73,8 +73,10 @@ class MotorControllerQt(QWidget):
     def load(self):
         return
 
-    def move_left(self):
+    def move_left(self, steps):
         # Go and grab the number on the distance setting box and send move that amount command to motors.
+        with LM:
+            LM.move_rel(steps, 0)
         return
 
     def move_right(self):

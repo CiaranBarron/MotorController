@@ -1,16 +1,15 @@
 # Ciaran Barron 16.07.24
 
 import SerialDeviceBase
-import numpy as np
 
 """
 :TO DO:
 - Finish read output / clear output function
 - setup the UI side of things
-- setup the serial comms identification to auto find board controlling the motor on the computer.
 - 
 """
-
+stageAmax = 5000
+stageBmax = 3000
 
 class Motors(SerialDeviceBase.SerialDevice):
     """ Control motors moving stage on LMA310 lithography set up"""
@@ -19,29 +18,34 @@ class Motors(SerialDeviceBase.SerialDevice):
         """The init should also home the motors. Then they should be kept on for the remainder of the use time."""
         super().__init__()
 
-        self._arudino_serial_number = "FE9AF43E51514746324B2020FF0C3822"
+        self._arduino_serial_number = "FE9AF43E51514746324B2020FF0C3822"
         self._port = SerialDeviceBase.SerialDevice.find_device_comport(
             "serial_number",
-            self._arudino_serial_number
+            self._arduino_serial_number
         )
         self._baudrate = 115200
-
-        # A and B positions. The motors will home when switched on. 
-        self._Apos = 0
-        self._Bpos = 0
-
-        # :NOTE: These need to be set in the lab.
-        self._stageAmax = 10000
-        self._stageBmax = 10000
 
     def __enter__(self):
         """Enter function for context manager"""
         print("Connecting to Motors...")
+
+        with open("MotorPositions.bin", 'rb') as f:
+            pos = f.readline()
+
+        a, b = pos.decode().split(" ")
+        self._Apos, self._Bpos = int(a), int(b)
+
         super().__enter__()
         print("Connected.")
 
-    def __exit__(self):
-        """Exit function for context manager. """    
+        self.set_motor_positions()
+        print("Updated motor positions")
+
+    def __exit__(self, *args):
+        """ Exit function for context manager. Update file with Motor Positions. """
+        with open("MotorPositions.bin", 'wb') as f:
+            f.write(bytes(f"{self._Apos} {self._Bpos}", "utf-8"))
+
         super().__exit__()
         print("Motors disconnected.")
 
@@ -54,72 +58,68 @@ class Motors(SerialDeviceBase.SerialDevice):
         except Exception as e:
             print(repr(e))
 
-    def verify_positions(self, A, B):
+    def readline(self, display=True):
+        # read_until -> check for enotyt string or timeout -> continue.
+        message = False
+        while message != "":
+            message = self.conn.read_until().decode()
+            if display:
+                print(f"received\t<-\t{message}")
+        return message
+
+    @staticmethod
+    def verify_positions(A: int, B: int):
         """Make sure that the values of A and B are within movement limits for the stage. """
-
-        # check steps >= minimum
-        if A < 0:
-            A = 0
-        if B < 0:
-            B = 0
-
-        # check steps <= maximum
-        if A > self._stageAmax:
-            A = self._stageAmax
-        if B > self._stageBmax:
-            B = self._stageBmax
-        
+        assert 0 <= A <= stageAmax, "Check 0 <= A < Max"
+        assert 0 <= B <= stageBmax, "Check 0 <= B < Max"
         return A, B
     
-    def format_msg(self, A, B):
+    def format_json(self, A: int, B: int, home=0):
         """Take A and B positions (in motor steps) and format for the arduino"""
-        A, B = self.verify_positions(A, B)
-        print("{\"stepsA\": " + str(A) + ", \"stepsB\": " + str(B) + "}")
-        return "{\"stepsA\": {0}, \"stepsB\": {1}}".format(A,B)
+        self.verify_positions(A, B)
+        return "{\"stepsA\":"+str(A)+",\"stepsB\":"+str(B)+ ",\"Home\":"+str(home)+"}"
 
-    def update_positions(self, A, B):
-        "update the positions of A and B"
-        A, B = self.verify_positions(A, B)
+    def set_motor_positions(self):
+        a, b = str(self._Apos), str(self._Bpos)
+        update_string = f"\"currentApos\":{a}, \"currentBpos\":{b}"
+        update_message = "{" + f"\"stepsA\":{a}," + f"\"stepsB\":{b}, \"Home\":0," + update_string + "}"
+        self.send(update_message)
 
-        self._Apos = A
-        self._Bpos = B
+    def update_positions(self, A: int, B: int):
+        """update the positions of A and B"""
+        self._Apos, self._Bpos = self.verify_positions(A, B)
 
-    def read_output(self):
-        """clear output buffer from the arduino """
-        # read_until -> check for enotyt string or timeout -> continue.
-        return None
+    def home(self):
+        self.send(self.format_json(self._Apos, self._Bpos, home=1))
+        self._Apos = 0
+        self._Bpos = 0
+
 
     def move(self, A, B):
         """Take absolute positions to move the device to. (steps of motor)"""
-        self.send(self.format_msg(A, B))
+        self.send(self.format_json(A, B))
         self.update_positions(A, B)
-        self.read_output()
+        self.readline()
 
     def move_rel(self, A, B, dirA='left', dirB='up'):
-        """Move the motors by a relative amount. (steps of motor)
-        :inputs: 
-        self
-        A, B - number of steps to move
-        dirA, dirB - Which direction to move.
-        
-        :NOTE: Need to find out if left/right up/down is on A or B and is + or -
-        
-        return None
-        """
-        if dirA == 'left':
-            newA = self._Apos + A
-        else: 
-            newA = self._Apos - A
-        
-        if dirB == 'up':
-            newB = self._Bpos + B
-        else: 
-            newB = self._Bpos - B
+        """Move motors by amount relative to current position."""
+        offsetA = A if dirA == 'left' else -A
+        offsetB = B if dirB == 'up' else -B
 
-        self.send(self.format_msg(newA, newB))
-        self.update_positions(newA, newB)
-        self.read_output()
+        self.move(self._Apos + offsetA, self._Bpos + offsetB)
 
 if __name__ == "__main__":
     """Test that Motors behave as expected. Move to a middle position and perform scan action."""
     M = Motors()
+    with M:
+        M.readline()
+        # M.move(2000, 2000)
+
+        M.home()
+
+        M.set_motor_positions()
+
+        print(M._Apos)
+
+        M.move(800,800)
+    # M.format_msg(10000000,0)

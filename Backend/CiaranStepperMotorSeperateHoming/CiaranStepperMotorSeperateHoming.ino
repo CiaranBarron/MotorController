@@ -112,18 +112,18 @@ void setup() {
   Serial.println(); Serial.println(); Serial.println();
   Serial.println("> **********Dual Stepper Motor Driver*********");
   Serial.println("> RoR 2024");
-  Serial.println("> After the motors home, set position using JSON: {\"stepsA\": X, \"stepsB\": Y}");
+  Serial.println("> After the motors home, set position using JSON: {\"stepsA\": X, \"stepsB\": Y, \"Home\": 0}");
   Serial.println("> Pressing flashing button on front of device will stop movement in the event of an emergency. Holding for 5 seconds will force both motors to home");
+  Serial.println("> Enter current stage positions to stop Homing of Motors. (1 second timeout)");
 
-  // Home the motors at startup
-  homeMotors();
-
-  // Move motors back a little from the sensor so it can home without running into the sensor next time.
-  motorA.moveTo(500);
-  motorB.moveTo(500);
-
-  motorA.run();
-  motorB.run();
+  // These need to be set or the motors wont move.
+  motorA.setMaxSpeed(500);
+  motorA.setAcceleration(500);
+  motorA.setCurrentPosition(0);
+  
+  motorB.setMaxSpeed(500);
+  motorB.setAcceleration(500);
+  motorB.setCurrentPosition(0);
 
 }
 
@@ -160,6 +160,21 @@ void loop() {
     if (!error) {
       int stepsA = doc["stepsA"];
       int stepsB = doc["stepsB"];
+      int homeFlag = doc["Home"];
+      int currentApos = doc["currentApos"];
+      int currentBpos = doc["currentBpos"];
+
+      if (homeFlag > 0) {
+        homeMotors();
+        stepsA = 500;
+        stepsB = 500;
+      } else {
+        if ((currentApos) && (currentBpos)) {
+          motorA.setCurrentPosition(currentApos);
+          motorB.setCurrentPosition(currentBpos);
+          Serial.println("Updated current motor positions.");
+        }
+      }
 
       motorA.moveTo(stepsA);
       motorB.moveTo(stepsB);
