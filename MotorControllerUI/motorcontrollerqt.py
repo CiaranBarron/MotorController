@@ -27,17 +27,17 @@ class MotorControllerQt(QWidget):
         self.ui.setupUi(self)
 
         # set values of spin boxes.
-        self._move_strength = 10 # number of steps no distances.
+        self._move_strength = 0 # number of steps no distances.
         self._t = 0
 
         # Click actions
         self.ui.DO_IT.clicked.connect(self.doit_method)
         self.ui.HOME.clicked.connect(self.home)
         self.ui.LOAD_ROUTE.clicked.connect(self.load)
-        self.ui.UP.clicked.connect(self.move_up)
-        self.ui.DOWN.clicked.connect(self.move_down)
-        self.ui.LEFT.clicked.connect(self.move_left)
-        self.ui.RIGHT.clicked.connect(self.move_right)
+        self.ui.UP.clicked.connect(lambda: self._move_rel_dir('up'))
+        self.ui.DOWN.clicked.connect(lambda: self._move_rel_dir('down'))
+        self.ui.LEFT.clicked.connect(lambda: self._move_rel_dir('left'))
+        self.ui.RIGHT.clicked.connect(lambda: self._move_rel_dir('right'))
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
         self.ui.MOVE_MOTORS_ARROW_SETTING.valueChanged.connect(self.update_move_strength)  # does this change it?
 
@@ -46,19 +46,17 @@ class MotorControllerQt(QWidget):
         Will use the move_left/right/up/down methods but also reference
         the values in the motor pos and current and target boxes.
         """
-        self.ui.STAGE_FRAME.setWindowTitle(self._move_strength)
+        self.ui.STAGE_FRAME.setWindowTitle(str(self._move_strength))
         return
 
     def update_move_strength(self):
         ms = self.ui.MOVE_MOTORS_ARROW_SETTING.value()
 
+        if ms > 1000:
+            ms = 1000
         if ms < 0:
             ms = 0
-        elif ms > 1000:
-            ms = 1000
-        else:
-            ms = 100
-
+        print(f"Motor move strength: steps - {ms}")
         self._move_strength = ms
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)
 
@@ -67,25 +65,26 @@ class MotorControllerQt(QWidget):
     def home(self):
         """Home the Motors. This should happen automatically in the arduino code at startup. Testing only."""
         with Motors:
-            Motors.move(0,0)
+            Motors.home()
         return
+
+    def _move(self, stepsA, stepsB):
+        with LM:
+            LM.move(stepsA, stepsB)
+
+    def _move_rel_dir(self, _dir):
+        with Motors:
+            match _dir:
+                case 'left':
+                    Motors.move_rel(self._move_strength, 0, dirA='left')
+                case 'right':
+                    Motors.move_rel(self._move_strength, 0, dirA='right')
+                case 'up':
+                    Motors.move_rel(0, self._move_strength, dirB='up')
+                case 'down':
+                    Motors.move_rel(0, self._move_strength, dirB='down')
 
     def load(self):
-        return
-
-    def move_left(self, steps):
-        # Go and grab the number on the distance setting box and send move that amount command to motors.
-        with LM:
-            LM.move_rel(steps, 0)
-        return
-
-    def move_right(self):
-        return
-
-    def move_up(self):
-        return
-
-    def move_down(self):
         return
 
     def load_map(self):

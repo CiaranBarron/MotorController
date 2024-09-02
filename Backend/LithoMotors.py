@@ -1,7 +1,7 @@
 # Ciaran Barron 16.07.24
 
 import SerialDeviceBase
-
+import os
 """
 :TO DO:
 - Finish read output / clear output function
@@ -29,7 +29,10 @@ class Motors(SerialDeviceBase.SerialDevice):
         """Enter function for context manager"""
         print("Connecting to Motors...")
 
-        with open("MotorPositions.bin", 'rb') as f:
+        ui_rel_file_path = "/../Backend/MotorPositions.bin"
+        cwd = os.getcwd()
+        with open(cwd + ui_rel_file_path, 'rb') as f:
+        # with open("MotorPositions.bin", 'rb') as f:
             pos = f.readline()
 
         a, b = pos.decode().split(" ")
@@ -38,12 +41,17 @@ class Motors(SerialDeviceBase.SerialDevice):
         super().__enter__()
         print("Connected.")
 
+        self.readline(display=False) # clear messages from arduino
+
         self.set_motor_positions()
         print("Updated motor positions")
 
     def __exit__(self, *args):
         """ Exit function for context manager. Update file with Motor Positions. """
-        with open("MotorPositions.bin", 'wb') as f:
+        ui_rel_file_path = "/../Backend/MotorPositions.bin"
+        cwd = os.getcwd()
+        with open(cwd + ui_rel_file_path, 'wb') as f:
+        # with open("MotorPositions.bin", 'wb') as f:
             f.write(bytes(f"{self._Apos} {self._Bpos}", "utf-8"))
 
         super().__exit__()
@@ -58,7 +66,7 @@ class Motors(SerialDeviceBase.SerialDevice):
         except Exception as e:
             print(repr(e))
 
-    def readline(self, display=True):
+    def readline(self, display=False):
         # read_until -> check for enotyt string or timeout -> continue.
         message = False
         while message != "":
@@ -67,11 +75,10 @@ class Motors(SerialDeviceBase.SerialDevice):
                 print(f"received\t<-\t{message}")
         return message
 
-    @staticmethod
-    def verify_positions(A: int, B: int):
+    def verify_positions(self, A: int, B: int):
         """Make sure that the values of A and B are within movement limits for the stage. """
-        assert 0 <= A <= stageAmax, "Check 0 <= A < Max"
-        assert 0 <= B <= stageBmax, "Check 0 <= B < Max"
+        assert 0 <= A <= stageAmax, f"Check 0 <= A < Max. Current: {self._Apos, self._Bpos}"
+        assert 0 <= B <= stageBmax, f"Check 0 <= B < Max. Current: {self._Apos, self._Bpos}"
         return A, B
     
     def format_json(self, A: int, B: int, home=0):
@@ -94,7 +101,6 @@ class Motors(SerialDeviceBase.SerialDevice):
         self._Apos = 0
         self._Bpos = 0
 
-
     def move(self, A, B):
         """Take absolute positions to move the device to. (steps of motor)"""
         self.send(self.format_json(A, B))
@@ -105,7 +111,7 @@ class Motors(SerialDeviceBase.SerialDevice):
         """Move motors by amount relative to current position."""
         offsetA = A if dirA == 'left' else -A
         offsetB = B if dirB == 'up' else -B
-
+        print(self._Apos, self._Bpos, self._Apos + offsetA, self._Bpos + offsetB)
         self.move(self._Apos + offsetA, self._Bpos + offsetB)
 
 if __name__ == "__main__":
