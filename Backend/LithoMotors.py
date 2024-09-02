@@ -44,7 +44,6 @@ class Motors(SerialDeviceBase.SerialDevice):
         self.readline(display=False) # clear messages from arduino
 
         self.set_motor_positions()
-        print("Updated motor positions")
 
     def __exit__(self, *args):
         """ Exit function for context manager. Update file with Motor Positions. """
@@ -79,6 +78,7 @@ class Motors(SerialDeviceBase.SerialDevice):
         """Make sure that the values of A and B are within movement limits for the stage. """
         assert 0 <= A <= stageAmax, f"Check 0 <= A < Max. Current: {self._Apos, self._Bpos}"
         assert 0 <= B <= stageBmax, f"Check 0 <= B < Max. Current: {self._Apos, self._Bpos}"
+        # fix this later
         return A, B
     
     def format_json(self, A: int, B: int, home=0):
@@ -109,10 +109,11 @@ class Motors(SerialDeviceBase.SerialDevice):
 
     def move_rel(self, A, B, dirA='left', dirB='up'):
         """Move motors by amount relative to current position."""
-        offsetA = A if dirA == 'left' else -A
+        offsetA = -A if dirA == 'left' else A
         offsetB = B if dirB == 'up' else -B
-        print(self._Apos, self._Bpos, self._Apos + offsetA, self._Bpos + offsetB)
         self.move(self._Apos + offsetA, self._Bpos + offsetB)
+        print(f"Current steps: A: {self._Apos} B: {self._Bpos}")
+
 
 if __name__ == "__main__":
     """Test that Motors behave as expected. Move to a middle position and perform scan action."""

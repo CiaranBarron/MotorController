@@ -18,7 +18,6 @@ import LithoMotors as LM
 # Create Motors object, interact via with statement which opens and closes connection.
 Motors = LM.Motors()
 
-
 class MotorControllerQt(QWidget):
     """Class for connecting the motors to the UI"""
     def __init__(self, parent=None):
@@ -73,6 +72,7 @@ class MotorControllerQt(QWidget):
             LM.move(stepsA, stepsB)
 
     def _move_rel_dir(self, _dir):
+
         with Motors:
             match _dir:
                 case 'left':
