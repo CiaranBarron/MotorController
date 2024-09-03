@@ -172,7 +172,7 @@ void loop() {
         motorB.setMaxSpeed(motorSpeed);
 
         if (motorAccel > 0) {
-          motorA.setAcceleration(motorAccel;
+          motorA.setAcceleration(motorAccel);
           motorB.setAcceleration(motorAccel);
       }
 
