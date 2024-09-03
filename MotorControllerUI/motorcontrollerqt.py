@@ -2,6 +2,7 @@
 # Ciaran Barron 16.06.24
 
 import sys
+import time
 
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -33,6 +34,7 @@ class MotorControllerQt(QWidget):
         self.ui.DO_IT.clicked.connect(self.doit_method)
         self.ui.HOME.clicked.connect(self.home)
         self.ui.LOAD_ROUTE.clicked.connect(self.load)
+        self.ui.HOME_CONOR.clicked.connect(self.home_conor)
         self.ui.UP.clicked.connect(lambda: self._move_rel_dir('up'))
         self.ui.DOWN.clicked.connect(lambda: self._move_rel_dir('down'))
         self.ui.LEFT.clicked.connect(lambda: self._move_rel_dir('left'))
@@ -65,11 +67,17 @@ class MotorControllerQt(QWidget):
         """Home the Motors. This should happen automatically in the arduino code at startup. Testing only."""
         with Motors:
             Motors.home()
-        return
+
+    def home_conor(self):
+        with Motors:
+            Motors.home()
+        time.sleep(2)
+        with Motors:
+            Motors.move(2800, 1900)
 
     def _move(self, stepsA, stepsB):
-        with LM:
-            LM.move(stepsA, stepsB)
+        with Motors:
+            Motors.move(stepsA, stepsB)
 
     def _move_rel_dir(self, _dir):
 

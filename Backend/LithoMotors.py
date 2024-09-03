@@ -65,10 +65,10 @@ class Motors(SerialDeviceBase.SerialDevice):
         except Exception as e:
             print(repr(e))
 
-    def readline(self, display=False):
+    def readline(self, display=True, terminator=""):
         # read_until -> check for enotyt string or timeout -> continue.
         message = False
-        while message != "":
+        while message != terminator:
             message = self.conn.read_until().decode()
             if display:
                 print(f"received\t<-\t{message}")
@@ -100,6 +100,7 @@ class Motors(SerialDeviceBase.SerialDevice):
         self.send(self.format_json(self._Apos, self._Bpos, home=1))
         self._Apos = 0
         self._Bpos = 0
+        self.readline()
 
     def move(self, A, B):
         """Take absolute positions to move the device to. (steps of motor)"""
