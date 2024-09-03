@@ -74,9 +74,6 @@ class Ui_Dialog_MotorController(object):
     def retranslateUi(self, Dialog_MotorController):
         Dialog_MotorController.setWindowTitle(QCoreApplication.translate("Dialog_MotorController", u"Dialog", None))
         self.DO_IT.setText(QCoreApplication.translate("Dialog_MotorController", u"Do it!", None))
-#if QT_CONFIG(shortcut)
-        self.DO_IT.setShortcut(QCoreApplication.translate("Dialog_MotorController", u"Up", None))
-#endif // QT_CONFIG(shortcut)
         self.DOWN.setText(QCoreApplication.translate("Dialog_MotorController", u"DOWN", None))
 #if QT_CONFIG(shortcut)
         self.DOWN.setShortcut(QCoreApplication.translate("Dialog_MotorController", u"Down", None))

@@ -25,9 +25,6 @@
    <property name="text">
     <string>Do it!</string>
    </property>
-   <property name="shortcut">
-    <string>Up</string>
-   </property>
   </widget>
   <widget class="QSpinBox" name="MOVE_MOTORS_ARROW_SETTING">
    <property name="geometry">
