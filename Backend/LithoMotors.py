@@ -100,7 +100,13 @@ class Motors(SerialDeviceBase.SerialDevice):
         self.send(self.format_json(self._Apos, self._Bpos, home=1))
         self._Apos = 0
         self._Bpos = 0
-        self.readline()
+
+        print("Homing...", end='')
+        message = "False"
+        while not "Done" in message:
+            message = self.conn.read_until().decode()
+        print("Done")
+
 
     def move(self, A, B):
         """Take absolute positions to move the device to. (steps of motor)"""
