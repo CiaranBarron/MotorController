@@ -163,6 +163,18 @@ void loop() {
       int homeFlag = doc["Home"];
       int currentApos = doc["currentApos"];
       int currentBpos = doc["currentBpos"];
+      int motorSpeed = doc["maxSpeed"];
+      int motorAccel = doc["MotorAccel"];
+
+      // can optionally update the motor speed and accel, might want to do a slow moving exposure. 
+      if (motorSpeed > 0) {
+        motorA.setMaxSpeed = motorSpeed;
+        motorB.setMaxSpeed = motorSpeed;
+
+        if (motorAccel > 0) {
+          motorA.setAcceleration = motorAccel;
+          motorB.setAcceleration = motorAccel;
+      }
 
       if (homeFlag > 0) {
         homeMotors();
