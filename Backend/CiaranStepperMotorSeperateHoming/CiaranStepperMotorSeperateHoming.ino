@@ -174,6 +174,7 @@ void loop() {
         if (motorAccel > 0) {
           motorA.setAcceleration(motorAccel);
           motorB.setAcceleration(motorAccel);
+        }
       }
 
       if (homeFlag > 0) {
