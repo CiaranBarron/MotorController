@@ -71,7 +71,6 @@ class MotorControllerQt(QWidget):
     def home_conor(self):
         with Motors:
             Motors.home()
-        time.sleep(2)
         with Motors:
             Motors.move(2800, 1900)
 
