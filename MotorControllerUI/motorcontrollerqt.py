@@ -72,7 +72,7 @@ class MotorControllerQt(QWidget):
         with Motors:
             Motors.home()
         with Motors:
-            Motors.move(2800, 1900)
+            Motors.move(2895, 1923)
 
     def _move(self, stepsA, stepsB):
         with Motors:

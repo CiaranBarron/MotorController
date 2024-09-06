@@ -1,4 +1,4 @@
 .qtcreator
 MotorControllerUI/.qtcreator/*
 __init__.py
-
+Backend/MotorPositions.bin
