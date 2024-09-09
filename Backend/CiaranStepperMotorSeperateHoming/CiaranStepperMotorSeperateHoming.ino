@@ -1,5 +1,6 @@
 #include <AccelStepper.h>
 #include <ArduinoJson.h>
+#include <EEPROM.h>
 
 // Define motor pins
 #define MOTOR_A_STEP_PIN 5
@@ -21,6 +22,14 @@
 AccelStepper motorA(AccelStepper::DRIVER, MOTOR_A_STEP_PIN, MOTOR_A_DIR_PIN);
 AccelStepper motorB(AccelStepper::DRIVER, MOTOR_B_STEP_PIN, MOTOR_B_DIR_PIN);
 
+// Motor positions A and B (will be stored in EEPROM)
+long motorPositionA;
+long motorPositionB;
+
+// Assign EEPROM addresses to store motor positions
+constexpr int addrMotorPositionA = 1*sizeof(long);
+constexpr int addrMotorPositionB = 2*sizeof(long);
+
 // Variables to track homing status
 volatile bool homingCompleteA = false;
 volatile bool homingCompleteB = false;
@@ -33,6 +42,21 @@ const long interval = 500; // interval for 1Hz flashing
 unsigned long buttonPressTime = 0;
 bool buttonPressed = false;
 bool buttonHeld = false;
+
+//EEPROM function for reset, read and write. 
+void wipeEEPROM() {
+  for (int i = 0; i < EEPROM.length(); i++) {
+    EEPROM.write(i, 0);
+  }
+}
+
+void readFromEEPROM(int address, long &value) {
+  EEPROM.get(address, value);
+}
+
+void saveToEEPROM(int address, long value) {
+  EEPROM.put(address, value);
+}
 
 // Interrupt Service Routines (ISR) for hall sensors
 void hallSensorA_ISR() {
@@ -116,18 +140,23 @@ void setup() {
   Serial.println("> Pressing flashing button on front of device will stop movement in the event of an emergency. Holding for 5 seconds will force both motors to home");
   Serial.println("> Enter current stage positions to stop Homing of Motors. (1 second timeout)");
 
+  readFromEEPROM(addrMotorPositionA, motorPositionA);
+  readFromEEPROM(addrMotorPositionB, motorPositionB);
+  
+  motorA.setCurrentPosition(motorPositionA);
+  motorB.setCurrentPosition(motorPositionB);
+  
   // These need to be set or the motors wont move.
   motorA.setMaxSpeed(500);
   motorA.setAcceleration(500);
-  motorA.setCurrentPosition(0);
   
   motorB.setMaxSpeed(500);
   motorB.setAcceleration(500);
-  motorB.setCurrentPosition(0);
-
+  
 }
 
 void loop() {
+
   // Check for button press
   if (digitalRead(BUTTON_PIN) == LOW) {
     if (!buttonPressed) {
@@ -205,6 +234,18 @@ void loop() {
   // Run the motors to their target positions
   motorA.run();
   motorB.run();
+
+  // save new motor positions to EEPROM
+  saveToEEPROM(addrMotorPositionA, motorPositionA);
+  saveToEEPROM(addrMotorPositionB, motorPositionB);
+
+  Serial.print("Saving motor positions to EEPROM: ");
+
+  readFromEEPROM(addrMotorPositionA, motorPositionA);
+  readFromEEPROM(addrMotorPositionB, motorPositionB);
+  
+  Serial.print(motorPositionA);
+  Serial.println(motorPositionB);
 
   // Flash the LED at 1Hz when motors are moving
   if (motorsMoving) {
