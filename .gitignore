@@ -1,8 +1,7 @@
-.qtcreator
+_.qtcreator
 MotorControllerUI/.qtcreator/*
 __init__.py
 Backend/MotorPositions.bin
 __pycache__/*
-*.autosave
-
-
+*.autosave_init__.py
+.DS_Store
