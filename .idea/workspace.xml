@@ -34,6 +34,14 @@
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\LMA10\Documents\MotorController\Backend\StepperMotorEEPROMStorage" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\LMA10\Documents\MotorController\Backend" />
+    </key>
+  </component>
   <component name="RunManager" selected="Python.motorcontrollerqt">
     <configuration name="LithoMotors" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MotorController" />

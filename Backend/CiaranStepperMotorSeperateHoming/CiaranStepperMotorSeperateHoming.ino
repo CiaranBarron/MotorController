@@ -189,11 +189,17 @@ void loop() {
         }
       }
 
+      Serial.print("Previous Motor Positions:"); 
+      Serial.print(motorA.currentPosition());
+      Serial.print(", ");
+      Serial.println(motorB.currentPosition());
+
       motorA.moveTo(stepsA);
       motorB.moveTo(stepsB);
 
       Serial.print("> Moving Motors: ");
       Serial.println(jsonString);
+
 
     } else {
       Serial.println("> Failed to parse JSON");
@@ -217,4 +223,7 @@ void loop() {
     // Ensure the LED is off when motors are not moving
     digitalWrite(LED_PIN, LOW);
   }
+  
+
+  
 }
