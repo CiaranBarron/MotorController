@@ -4,6 +4,8 @@
 import sys
 import time
 
+from serial import Serial
+
 from PySide6.QtWidgets import QApplication, QWidget
 
 # Important:
@@ -72,7 +74,7 @@ class MotorControllerQt(QWidget):
         with Motors:
             Motors.home()
         with Motors:
-            Motors.move(2895, 1923)
+            Motors.move(3332, 1700)
 
     def _move(self, stepsA, stepsB):
         with Motors:
@@ -91,7 +93,51 @@ class MotorControllerQt(QWidget):
                 case 'down':
                     Motors.move_rel(0, self._move_strength, dirB='down')
 
-    def load(self):
+    def litho(self, expose_time_seconds = 90):
+
+        with Serial('COM3', baudrate=115200, timeout=0.5) as s:
+
+            s.readline()
+            _message = f"<{expose_time_seconds}>".encode()
+            s.write(_message)
+            msg = s.readline().decode()
+            print(msg)
+
+    def load(self, steps = 6, mode='square', flipped_dir=False, _dir='left'):
+        ''' Patterns for litho '''
+
+        if mode=='line':
+            # move_dir = 'right'
+            for _ in range(steps):
+                print(f"exposure {_} of {steps}")
+                self.litho()
+                time.sleep(95)
+                if flipped_dir:
+                    with Motors:
+                        Motors.move_rel(10, 0, dirA=_dir)
+                with Motors:
+                    Motors.move_rel(24, 0, dirA=_dir)
+
+        elif mode=='square':
+            ''' 12 left and up, then twelve right and up etc.. '''
+            steps = (12, 3)
+
+            self.litho(expose_time_seconds=43)
+
+            for i in range(steps[1]):
+                for  j in range(steps[0]):
+                    with Motors:
+                        # if even move right. else left.
+                        if i % 2 == 0:
+                            Motors.move_rel(24, 0, dirA='right')
+                        else:
+                            Motors.move_rel(24, 0, dirA='left')
+                    self.litho(expose_time_seconds=43)
+
+                with Motors:
+                    Motors.move_rel(0, 6, dirB='up')
+
+
         return
 
     def load_map(self):

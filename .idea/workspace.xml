@@ -30,12 +30,13 @@
     "Python.motorcontrollerqt.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/Backend/StepperMotorEEPROMStorage",
+    "last_opened_file_path": "C:/Users/LMA10/Documents/PCOEdgeGUI/mainwindow_3.py",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\LMA10\Documents\PCOEdgeGUI-Litho" />
       <recent name="C:\Users\LMA10\Documents\MotorController\Backend\StepperMotorEEPROMStorage" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -134,16 +135,5 @@
       <updated>1724154914584</updated>
     </task>
     <servers />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Backend/LithoMotors.py</url>
-          <line>61</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
