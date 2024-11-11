@@ -31,19 +31,23 @@ class MotorControllerQt(QWidget):
         self.ui.setupUi(self)
 
         # set values of spin boxes.
-        self._move_strength = 0 # number of steps no distances.
+        self._move_strength = 0 # number of steps no distances.  I named it badly, but blame the oxford instruments.
         self._exposure_time = 90
         self._exposure_dose = 0
         self._litho_uv_power = 0
+
+        #values in mJ/cm2
+        self._3120_complete_dose = 65 * 2 # double the sheet value. mJ/cm2
+        self._4340_complete_dose = 140 * 3 #triple the recommended dose on the sheet. For some reason it works well though.
         self._pattern = False
 
         # Options for line and square patterns
         self._DIR1 = False
         self._DIR2 = False
         self._TRIANGLE_DIR = False
-        self._DIR1_step_size = 0
+        self._DIR1_step_size = 24
         self._DIR1_no_steps = 0
-        self._DIR2_step_size = 0
+        self._DIR2_step_size = 6
         self._DIR2_no_steps = 0
 
         # options for triangle pattern
@@ -113,6 +117,25 @@ class MotorControllerQt(QWidget):
         self.ui.LITHO_UV_POWER.stateChanged.connect(self.update_uv_power)
         self.ui.LITHO_DOSE.stateChanged.connect(self.update_exposure_dose)
 
+        self.ui.RADIO_3120.stateChange.connect(self.update_exposure_3120)
+        self.ui.RADIO_4340.stateChange.connect(self.update_exposure_4340)
+
+    def update_exposure_3120(self):
+        if self.ui.RADIO_3120.isChecked():
+            self._exposure_dose = self._3120_complete_dose
+            self.ui.LITHO_DOSE.setValue(self._exposure_dose)
+            self.update_exposure_time()
+            self.ui.RADIO_4340.setChecked(False)
+        return None
+
+    def update_exposure_4340(self):
+        if self.ui.RADIO_4340.isChecked():
+            self._exposure_dose = self._4340_complete_dose
+            self.ui.LITHO_DOSE.setValue(self._exposure_dose)
+            self.update_exposure_time()
+            self.ui.RADIO_3120.setChecked(False)
+        return None
+
     def update_exposure_dose(self):
         self._exposure_dose = self.ui.LITHO_DOSE.value()
         self.ui.LITHO_TIMER_SECONDS.setValue(self._exposure_dose / self._litho_uv_power)
@@ -126,7 +149,7 @@ class MotorControllerQt(QWidget):
         return None
 
     def update_uv_power(self):
-        '''TODO: revist the function calls at the end of this sto see if they need to be implemented here.'''
+        '''TODO: revisit the function calls at the end of this sto see if they need to be implemented here.'''
         if self.ui.LITHO_POWER_CHANGE_CHECKBOX.isChecked():
             uv_power = self.ui.LITHO_UV_POWER.value()
             self._litho_uv_power = uv_power
@@ -442,6 +465,7 @@ class MotorControllerQt(QWidget):
                   .
                  ...
                 .....
+            TODO: Test patterning multiple shapes and directions. 
             '''
             start_size = self._triangle_start_size
             rows = self._triangle_rows
@@ -461,11 +485,11 @@ class MotorControllerQt(QWidget):
                         time.sleep(self._exposure_time)
                         if i % 2 == 0:
                             with Motors:
-                                Motors.move_rel(x_step, 0, dir='left')
+                                Motors.move_rel(x_step, 0, dir=row_dir)
                         else:
                             row_dir = 'left'
                             with Motors:
-                                Motors.move_rel(x_step, 0, dir='right')
+                                Motors.move_rel(x_step, 0, dir=row_dir)
 
                     else:
                         self.litho(self._exposure_time)
@@ -476,11 +500,82 @@ class MotorControllerQt(QWidget):
                 with Motors:
                     Motors.move_rel(0, y_step, dir=direction)
 
+                return None.
+
         elif self.ui.SQUARE_PATTERN_CHECK.isChecked():
-            '''run square pattern'''
+            '''TODO: test this on litho runs. Perhaps exclude certain direction combinations.'''
+
+            rows = self._DIR1_no_steps
+            cols = self._DIR2_no_steps
+
+            self.litho(self._exposure_time)
+            time.sleep(self._exposure_time)
+
+            for i in range(rows):
+
+                for j in range(cols):
+
+                    with Motors:
+                        # if even move dir1, else opposite.
+                        if i % 2 == 0:
+                            match self._DIR1:
+                                case 'left':
+                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='left')
+                                case 'right':
+                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='right')
+                                case 'up':
+                                    Motors.move_rel(0, self._DIR1_step_size, dirB='up')
+                                case 'down':
+                                    Motors.move_rel(0, self._DIR1_step_size, dirB='down')
+                        else:
+                            match self._DIR1:
+                                case 'right':
+                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='left')
+                                case 'left':
+                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='right')
+                                case 'down':
+                                    Motors.move_rel(0, self._DIR1_step_size, dirB='up')
+                                case 'up':
+                                    Motors.move_rel(0, self._DIR1_step_size, dirB='down')
+
+                    # because the direction flip is shitty w.r.t. backlash,
+                    # this should be enough without a litho after each step in DIR2
+
+                    self.litho(expose_time_seconds=43)
+                    time.sleep(44)
+
+                with Motors:
+                    match self._DIR2:
+                        case 'left':
+                            Motors.move_rel(self._DIR2_step_size, 0, dirA='left')
+                        case 'right':
+                            Motors.move_rel(self._DIR2_step_size, 0, dirA='right')
+                        case 'up':
+                            Motors.move_rel(0, self._DIR2_step_size, dirB='up')
+                        case 'down':
+                            Motors.move_rel(0, self._DIR2_step_size, dirB='down')
+
+                return None # this return is important. No touch.
 
         elif self.ui.LINE_PATTERN_CHECK.isChecked():
             '''run line pattern'''
+            steps = self._DIR2_no_steps
+
+            self.litho(expose_time_seconds=self._exposure_time)
+            time.sleep(self._exposure_time)
+
+            for _ in range(steps):
+                match self._DIR1:
+                    case 'left':
+                        Motors.move_rel(self._DIR1_step_size, 0, dirA='left')
+                    case 'right':
+                        Motors.move_rel(self._DIR1_step_size, 0, dirA='right')
+                    case 'up':
+                        Motors.move_rel(0, self._DIR1_step_size, dirB='up')
+                    case 'down':
+                        Motors.move_rel(0, self._DIR1_step_size, dirB='down')
+                self.litho(expose_time_seconds=self._exposure_time)
+                time.sleep(self._exposure_time)
 
         else:
             print("Error: No Pattern selected.")
