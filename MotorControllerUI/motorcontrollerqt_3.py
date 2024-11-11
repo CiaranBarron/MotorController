@@ -33,6 +33,8 @@ class MotorControllerQt(QWidget):
         # set values of spin boxes.
         self._move_strength = 0 # number of steps no distances.
         self._exposure_time = 90
+        self._exposure_dose = 0
+        self._litho_uv_power = 0
         self._pattern = False
 
         # Options for line and square patterns
@@ -80,7 +82,6 @@ class MotorControllerQt(QWidget):
         self.ui.DIR2_STEP_SIZE.valueChanged.connect(self.update_DIR2_step_size)
         self.ui.DIR2_NO_STEPS.valueChanged.connect(self.update_DIR2_no_steps)
 
-
         self.ui.TRIANGLE_X_STEPS.valueChanged.connect(self.update_triangle_x_steps)
         self.ui.TRIANGLE_Y_STEPS.valueChanged.connect(self.update_triangle_y_steps)
         self.ui.TRIANGLE_ROWS.valueChanged.connect(self.update_triangle_rows)
@@ -104,6 +105,51 @@ class MotorControllerQt(QWidget):
         self.ui.DIR2_DOWN.stateChanged.connect(self.update_DIR2_down_setting)
         self.ui.DIR2_LEFT.stateChanged.connect(self.update_DIR2_left_setting)
         self.ui.DIR2_RIGHT.stateChanged.connect(self.update_DIR2_right_setting)
+
+        self.ui.TRIANGLE_UP.stateChanged.connect(self.update_triangle_up_direction)
+        self.ui.TRIANGLE_DOWN.stateChanged.connect(self.update_triangle_down_direction)
+
+        self.ui.LITHO_POWER_CHANGE_CHECKBOX.stateChanged.connect(self.update_litho_power_checkbox)
+        self.ui.LITHO_UV_POWER.stateChanged.connect(self.update_uv_power)
+        self.ui.LITHO_DOSE.stateChanged.connect(self.update_exposure_dose)
+
+    def update_exposure_dose(self):
+        self._exposure_dose = self.ui.LITHO_DOSE.value()
+        self.ui.LITHO_TIMER_SECONDS.setValue(self._exposure_dose / self._litho_uv_power)
+
+    def update_exposure_time(self):
+        '''TODO: add the calculation of the total dose here.'''
+        # update the exposure time stored in the object.
+        exposure_time = self.ui.LITHO_TIMER_SECONDS.value()
+        self._exposure_time = exposure_time
+        self.ui.LITHO_TIMER_SECONDS.setValue(self._exposure_time)
+        return None
+
+    def update_uv_power(self):
+        '''TODO: revist the function calls at the end of this sto see if they need to be implemented here.'''
+        if self.ui.LITHO_POWER_CHANGE_CHECKBOX.isChecked():
+            uv_power = self.ui.LITHO_UV_POWER.value()
+            self._litho_uv_power = uv_power
+            self.update_exposure_time()
+            self.update_exposure_dose()
+
+
+    def update_litho_power_checkbox(self):
+        if self.ui.LITHO_POWER_CHANGE_CHECKBOX.isChecked():
+            self.ui.LITHO_UV_POWER.setEnabled(True)
+        else:
+            self.ui.LITHO_UV_POWER.setDisabled(True)
+    def update_triangle_up_direction(self):
+        if self.ui.TRIANGLE_UP.isChecked():
+            self._TRIANGLE_DIR = "up"
+            self.ui.TRIANGLE_DOWN.setChecked(False)
+        return None
+
+    def update_triangle_down_direction(self):
+        if self.ui.TRIANGLE_DOWN.isChecked():
+            self._TRIANGLE_DIR = "down"
+            self.ui.TRIANGLE_UP.setChecked(False)
+        return None
 
     def update_DIR2_up_setting(self):
         if self.ui.DIR2_UP.isChecked():
@@ -144,7 +190,6 @@ class MotorControllerQt(QWidget):
             self.ui.DIR2_UP.setChecked(False)
 
         return None
-
 
     def update_DIR1_up_setting(self):
         if self.ui.DIR1_UP.isChecked():
@@ -251,6 +296,7 @@ class MotorControllerQt(QWidget):
                 self.ui.DIR2_RIGHT.setEnabled(True)
 
         return None
+
     def update_move_strength(self):
         # address this function on the arduino side. Move all checks on position there. NONE IN UI.
         ms = self.ui.MOVE_MOTORS_ARROW_SETTING.value()
@@ -265,15 +311,6 @@ class MotorControllerQt(QWidget):
 
         return None
 
-    def update_exposure_time(self):
-        # update the exposure time stored in the object.
-        exposure_time = self.ui.LITHO_TIMER_SECONDS.value()
-        if exposure_time < 0:
-            print("No negative exposure times pls")
-            exposure_time = 0
-        self._exposure_time = exposure_time
-        self.ui.LITHO_TIMER_SECONDS.setValue(self._exposure_time)
-        return None
 
     def update_line_checkboxes(self):
         # enable the checkboxes.
@@ -398,10 +435,55 @@ class MotorControllerQt(QWidget):
         self.litho(expose_time_seconds=self._exposure_time)
     def doit_method(self):
         """
-        Will use the move_left/right/up/down methods but also reference
-        the values in the motor pos and current and target boxes.
+        DO IT
         """
-        self.ui.STAGE_FRAME.setWindowTitle(str(self._move_strength))
+        if self.ui.TRIANGLE_PATTERN_CHECK.isChecked():
+            '''run triangle pattern - if start size > 1 go right to left. 
+                  .
+                 ...
+                .....
+            '''
+            start_size = self._triangle_start_size
+            rows = self._triangle_rows
+            y_step = self._triangle_y_step_size
+            x_step = self._triangle_x_step_size
+            direction = self._TRIANGLE_DIR
+
+            for i in range(rows):
+                # 0 - rows
+                for j in range(start_size + i + 1):
+                    # 0 - start_size + i + 1
+                    # 0 + 1
+                    row_dir = 'right'
+
+                    if j == 0:
+                        self.litho(self._exposure_time)
+                        time.sleep(self._exposure_time)
+                        if i % 2 == 0:
+                            with Motors:
+                                Motors.move_rel(x_step, 0, dir='left')
+                        else:
+                            row_dir = 'left'
+                            with Motors:
+                                Motors.move_rel(x_step, 0, dir='right')
+
+                    else:
+                        self.litho(self._exposure_time)
+                        time.sleep(self._exposure_time)
+                        with Motors:
+                            Motors.move_rel(x_step, 0, dir=row_dir)
+
+                with Motors:
+                    Motors.move_rel(0, y_step, dir=direction)
+
+        elif self.ui.SQUARE_PATTERN_CHECK.isChecked():
+            '''run square pattern'''
+
+        elif self.ui.LINE_PATTERN_CHECK.isChecked():
+            '''run line pattern'''
+
+        else:
+            print("Error: No Pattern selected.")
         return
 
     def home(self):
