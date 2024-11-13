@@ -34,7 +34,8 @@ class MotorControllerQt(QWidget):
         self._move_strength = 0 # number of steps no distances.  I named it badly, but blame the oxford instruments.
         self._exposure_time = 90
         self._exposure_dose = 0
-        self._litho_uv_power = 0
+        self._litho_uv_power = 0.36  # mJ/cm2
+        self._dose_per_second = 4.44
 
         #values in mJ/cm2
         self._3120_complete_dose = 65 * 2 # double the sheet value. mJ/cm2
@@ -72,6 +73,8 @@ class MotorControllerQt(QWidget):
         # values of spin boxes & updates.
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
         self.ui.MOVE_MOTORS_ARROW_SETTING.valueChanged.connect(self.update_move_strength)  # does this change it?
+
+
 
         self.ui.LITHO_TIMER_SECONDS.setValue(90)
         self.ui.LITHO_TIMER_SECONDS.valueChanged.connect(self.update_exposure_time)
@@ -114,11 +117,20 @@ class MotorControllerQt(QWidget):
         self.ui.TRIANGLE_DOWN.stateChanged.connect(self.update_triangle_down_direction)
 
         self.ui.LITHO_POWER_CHANGE_CHECKBOX.stateChanged.connect(self.update_litho_power_checkbox)
-        self.ui.LITHO_UV_POWER.stateChanged.connect(self.update_uv_power)
-        self.ui.LITHO_DOSE.stateChanged.connect(self.update_exposure_dose)
+        self.ui.LITHO_UV_POWER.valueChanged.connect(self.update_uv_power)
 
-        self.ui.RADIO_3120.stateChange.connect(self.update_exposure_3120)
-        self.ui.RADIO_4340.stateChange.connect(self.update_exposure_4340)
+        self.ui.LITHO_DOSE.valueChanged.connect(self.update_exposure_dose)
+
+        self.ui.RADIO_3120.clicked.connect(self.update_exposure_3120)
+        self.ui.RADIO_4340.clicked.connect(self.update_exposure_4340)
+
+        self.ui.LITHO_UV_POWER.setValue(self._litho_uv_power)
+        self.ui.LITHO_UV_POWER.setDisabled(True)
+
+        # temporary:
+        self.ui.RADIO_4340.setDisabled(True)
+        self.ui.RADIO_3120.setDisabled(True)
+        self.ui.LITHO_DOSE.setDisabled(True)
 
     def update_exposure_3120(self):
         if self.ui.RADIO_3120.isChecked():
@@ -152,6 +164,7 @@ class MotorControllerQt(QWidget):
         '''TODO: revisit the function calls at the end of this sto see if they need to be implemented here.'''
         if self.ui.LITHO_POWER_CHANGE_CHECKBOX.isChecked():
             uv_power = self.ui.LITHO_UV_POWER.value()
+
             self._litho_uv_power = uv_power
             self.update_exposure_time()
             self.update_exposure_dose()
@@ -500,7 +513,7 @@ class MotorControllerQt(QWidget):
                 with Motors:
                     Motors.move_rel(0, y_step, dir=direction)
 
-                return None.
+                return None
 
         elif self.ui.SQUARE_PATTERN_CHECK.isChecked():
             '''TODO: test this on litho runs. Perhaps exclude certain direction combinations.'''

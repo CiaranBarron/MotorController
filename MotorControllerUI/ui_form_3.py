@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFrame,
-    QLabel, QPushButton, QRadioButton, QSizePolicy,
-    QSpinBox, QTextEdit, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QDoubleSpinBox,
+    QFrame, QLabel, QPushButton, QRadioButton,
+    QSizePolicy, QSpinBox, QTextEdit, QWidget)
 
 class Ui_Dialog_MotorController(object):
     def setupUi(self, Dialog_MotorController):
@@ -65,7 +65,7 @@ class Ui_Dialog_MotorController(object):
         self.LITHO_TIMER_SECONDS = QSpinBox(Dialog_MotorController)
         self.LITHO_TIMER_SECONDS.setObjectName(u"LITHO_TIMER_SECONDS")
         self.LITHO_TIMER_SECONDS.setGeometry(QRect(180, 320, 42, 22))
-        self.LITHO_TIMER_SECONDS.setMaximum(1000)
+        self.LITHO_TIMER_SECONDS.setMaximum(100000)
         self._LABEL_MOVE_STEPS = QLabel(Dialog_MotorController)
         self._LABEL_MOVE_STEPS.setObjectName(u"_LABEL_MOVE_STEPS")
         self._LABEL_MOVE_STEPS.setGeometry(QRect(20, 15, 121, 31))
@@ -194,15 +194,17 @@ class Ui_Dialog_MotorController(object):
         self.LITHO_DOSE = QSpinBox(Dialog_MotorController)
         self.LITHO_DOSE.setObjectName(u"LITHO_DOSE")
         self.LITHO_DOSE.setGeometry(QRect(180, 300, 42, 22))
+        self.LITHO_DOSE.setMaximum(100000)
         self._LABEL_UV_POWER = QLabel(Dialog_MotorController)
         self._LABEL_UV_POWER.setObjectName(u"_LABEL_UV_POWER")
         self._LABEL_UV_POWER.setGeometry(QRect(20, 280, 161, 16))
-        self.LITHO_UV_POWER = QSpinBox(Dialog_MotorController)
-        self.LITHO_UV_POWER.setObjectName(u"LITHO_UV_POWER")
-        self.LITHO_UV_POWER.setGeometry(QRect(180, 280, 42, 22))
         self.LITHO_POWER_CHANGE_CHECKBOX = QCheckBox(Dialog_MotorController)
         self.LITHO_POWER_CHANGE_CHECKBOX.setObjectName(u"LITHO_POWER_CHANGE_CHECKBOX")
         self.LITHO_POWER_CHANGE_CHECKBOX.setGeometry(QRect(20, 250, 271, 20))
+        self.LITHO_UV_POWER = QDoubleSpinBox(Dialog_MotorController)
+        self.LITHO_UV_POWER.setObjectName(u"LITHO_UV_POWER")
+        self.LITHO_UV_POWER.setGeometry(QRect(180, 280, 62, 22))
+        self.LITHO_UV_POWER.setMaximum(10000.000000000000000)
 
         self.retranslateUi(Dialog_MotorController)
 

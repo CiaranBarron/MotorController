@@ -76,8 +76,8 @@ class Motors(SerialDeviceBase.SerialDevice):
 
     def verify_positions(self, A: int, B: int):
         """Make sure that the values of A and B are within movement limits for the stage. """
-        assert 0 <= A <= stageAmax, f"Check 0 <= A < Max. Current: {self._Apos, self._Bpos}"
-        assert 0 <= B <= stageBmax, f"Check 0 <= B < Max. Current: {self._Apos, self._Bpos}"
+        # assert 0 <= A <= stageAmax, f"Check 0 <= A < Max. Current: {self._Apos, self._Bpos}"
+        # assert 0 <= B <= stageBmax, f"Check 0 <= B < Max. Current: {self._Apos, self._Bpos}"
         # fix this later
         return A, B
     

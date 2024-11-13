@@ -120,7 +120,7 @@ class MotorControllerQt(QWidget):
 
         elif mode=='square':
             ''' 12 left and down, then twelve right and up/down etc.. '''
-            steps = (8, 4)
+            steps = (6, 4)
             exp_time = 30
             self.litho(expose_time_seconds=exp_time)
             time.sleep(exp_time+1)
