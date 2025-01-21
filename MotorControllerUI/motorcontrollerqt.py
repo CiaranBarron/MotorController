@@ -100,6 +100,27 @@ class MotorControllerQt(QWidget):
                 case 'down':
                     lm.move_relative(y_id, -1 * self._move_strength)
 
+    def _move(self, x, y):
+        """
+        Move the motors to a specific x,y position
+        """
+        # need to add some verification of the coords x and y before continuing.
+        with LinearMotor(serial_number=s_id) as lm:
+
+            lm.move_absolute(x_id, x)
+            lm.move_absolute(y_id, y)
+
+            delta_pos = 74E-3 # define acceptable difference of 10 motor steps (73nm)
+            new_x = lm.steps2micron(lm.get_position(x_id))
+            new_y = lm.steps2micron(lm.get_position(y_id))
+
+            assert new_x - x > delta_pos, "Error: x position deviated by more than 10 steps"
+            assert new_y - y > delta_pos, "Error: y position deviated by more than 10 steps"
+
+            print(f"Motors moved to: {new_x, new_y}")
+
+            return None
+
     def litho(self, expose_time_seconds = 90):
         """
         Separate to motor control.

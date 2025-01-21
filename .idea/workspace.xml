@@ -39,7 +39,7 @@
     "Python.motorcontrollerqt_3.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/MotorControllerUI/UI_Layout.png",
+    "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/MotorControllerUI/UI_4_Layout.png",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
@@ -52,7 +52,7 @@
       <recent name="C:\Users\LMA10\Documents\MotorController\Backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.motorcontrollerqt">
+  <component name="RunManager" selected="Python.motorcontrollerqt_3">
     <configuration name="LithoMotors" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MotorController" />
       <option name="ENV_FILES" value="" />
@@ -165,8 +165,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.motorcontrollerqt" />
         <item itemvalue="Python.motorcontrollerqt_3" />
+        <item itemvalue="Python.motorcontrollerqt" />
         <item itemvalue="Python.motorcontrollerqt_2" />
         <item itemvalue="Python.LithoMotors" />
         <item itemvalue="Python.SerialDeviceBase" />
