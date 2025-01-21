@@ -120,8 +120,12 @@ class MotorControllerQt(QWidget):
 
         elif mode=='square':
             ''' 12 left and down, then twelve right and up/down etc.. '''
-            steps = (6, 4)
-            exp_time = 30
+
+            step_y = int(input("steps y: "))
+            step_x = int(input("steps x: "))
+            steps = (step_x, step_y)
+            exp_time = int(input("expose_time: "))
+            dir_v = input("direction: ")
             self.litho(expose_time_seconds=exp_time)
             time.sleep(exp_time+1)
             for i in range(steps[1]):
@@ -136,8 +140,11 @@ class MotorControllerQt(QWidget):
                             Motors.move_rel(24, 0, dirA='left')
                     self.litho(expose_time_seconds=exp_time)
                     time.sleep(exp_time+1)
+                    if (steps[1] == 1) and (j == steps[0] - 1):
+                        return None
                 with Motors:
-                    Motors.move_rel(0, 6, dirB='down')
+
+                    Motors.move_rel(0, 6, dirB=dir_v)
 
 
         return
