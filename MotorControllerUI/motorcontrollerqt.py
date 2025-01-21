@@ -16,10 +16,13 @@ from ui_form import Ui_Dialog_MotorController
 
 # This line allows the file to see back up one directory because I have the motor control script in a different folder.
 sys.path.insert(1, '../Backend')
-import LithoMotors as LM
 
-# Create Motors object, interact via with statement which opens and closes connection.
-Motors = LM.Motors()
+# ignore this error. The path insert solves it.
+from Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
+
+x_id = 842400280  # Motor id for x
+y_id = 842400780  # Motor id for y
+s_id = "FT7AX5XQ" # Serial number for motor controller board.
 
 class MotorControllerQt(QWidget):
     """Class for connecting the motors to the UI"""
@@ -29,11 +32,10 @@ class MotorControllerQt(QWidget):
         self.ui.setupUi(self)
 
         # set values of spin boxes.
-        self._move_strength = 0 # number of steps no distances.
-        self._t = 0
+        self._move_strength = 10 # um - (default) named this badly. Back when it was steps.
 
         # Click actions
-        self.ui.DO_IT.clicked.connect(self.doit_method)
+        # self.ui.DO_IT.clicked.connect(self.doit_method)
         self.ui.HOME.clicked.connect(self.home)
         self.ui.LOAD_ROUTE.clicked.connect(self.load)
         self.ui.HOME_CONOR.clicked.connect(self.home_conor)
@@ -44,57 +46,64 @@ class MotorControllerQt(QWidget):
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
         self.ui.MOVE_MOTORS_ARROW_SETTING.valueChanged.connect(self.update_move_strength)  # does this change it?
 
-    def doit_method(self):
-        """
-        Will use the move_left/right/up/down methods but also reference
-        the values in the motor pos and current and target boxes.
-        """
-        self.ui.STAGE_FRAME.setWindowTitle(str(self._move_strength))
-        return
+    # :REMOVED: do_it method - not used in basic.
 
     def update_move_strength(self):
+        """
+        Set the distance to be moved.
+        Need to rename to distance from steps in the dialog box.
+        """
         ms = self.ui.MOVE_MOTORS_ARROW_SETTING.value()
 
         if ms > 1000:
             ms = 1000
         if ms < 0:
             ms = 0
-        print(f"Motor move strength: steps - {ms}")
         self._move_strength = ms
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)
-
         return None
 
     def home(self):
-        """Home the Motors. This should happen automatically in the arduino code at startup. Testing only."""
-        with Motors:
-            Motors.home()
+        """
+        Home the Motors. Builtin LinearMotor func
+        """
+        with LinearMotor(serial_number = s_id) as lm:
+            lm.home_motor(x_id)
+            lm.home_motor(y_id)
+
 
     def home_conor(self):
-        with Motors:
-            Motors.home()
-        with Motors:
-            Motors.move(3332, 1700)
+        """
+        Set home position that is slide specific.
+        """
+        # move there first then check position set here.
+        home_x = 100
+        home_y = 100
 
-    def _move(self, stepsA, stepsB):
-        with Motors:
-            Motors.move(stepsA, stepsB)
+        with LinearMotor(serial_number = s_id) as lm:
+            lm.move_absolute(x_id, home_x)
+            lm.move_absolute(y_id, home_y)
+
+        print(f"Motors set to: {home_x},{home_y}")
+
 
     def _move_rel_dir(self, _dir):
 
-        with Motors:
+        with LinearMotor(serial_number=s_id) as lm:
             match _dir:
                 case 'left':
-                    Motors.move_rel(self._move_strength, 0, dirA='left')
+                    lm.move_relative(x_id, self._move_strength)
                 case 'right':
-                    Motors.move_rel(self._move_strength, 0, dirA='right')
+                    lm.move_relative(x_id, -1 * self._move_strength)
                 case 'up':
-                    Motors.move_rel(0, self._move_strength, dirB='up')
+                    lm.move_relative(y_id, self._move_strength)
                 case 'down':
-                    Motors.move_rel(0, self._move_strength, dirB='down')
+                    lm.move_relative(y_id, -1 * self._move_strength)
 
     def litho(self, expose_time_seconds = 90):
-
+        """
+        Separate to motor control.
+        """
         with Serial('COM3', baudrate=115200, timeout=0.5) as s:
 
             s.readline()
@@ -105,49 +114,51 @@ class MotorControllerQt(QWidget):
 
     def load(self, steps = 6, mode='square', flipped_dir=False, _dir='left'):
         ''' Patterns for litho '''
+        #
+        # if mode=='line':
+        #     # move_dir = 'right'
+        #     for _ in range(steps):
+        #         print(f"exposure {_} of {steps}")
+        #         self.litho()
+        #         time.sleep(95)
+        #         if flipped_dir:
+        #             with Motors:
+        #                 Motors.move_rel(10, 0, dirA=_dir)
+        #         with Motors:
+        #             Motors.move_rel(24, 0, dirA=_dir)
+        #
+        # elif mode=='square':
+        #     ''' 12 left and down, then twelve right and up/down etc.. '''
+        #
+        #     step_y = int(input("steps y: "))
+        #     step_x = int(input("steps x: "))
+        #     steps = (step_x, step_y)
+        #     exp_time = int(input("expose_time: "))
+        #     dir_v = input("direction: ")
+        #     self.litho(expose_time_seconds=exp_time)
+        #     time.sleep(exp_time+1)
+        #     for i in range(steps[1]):
+        #         for  j in range(steps[0]):
+        #             print(f"time left: {steps[0] * steps[1] * exp_time - (i*exp_time + j*exp_time)}")
+        #             with Motors:
+        #                 # if even move right. else left.
+        #                 # start moving left!
+        #                 if i % 2 != 0:
+        #                     Motors.move_rel(24, 0, dirA='right')
+        #                 else:
+        #                     Motors.move_rel(24, 0, dirA='left')
+        #             self.litho(expose_time_seconds=exp_time)
+        #             time.sleep(exp_time+1)
+        #             if (steps[1] == 1) and (j == steps[0] - 1):
+        #                 return None
+        #         with Motors:
+        #
+        #             Motors.move_rel(0, 6, dirB=dir_v)
+        #
+        #
+        # return
 
-        if mode=='line':
-            # move_dir = 'right'
-            for _ in range(steps):
-                print(f"exposure {_} of {steps}")
-                self.litho()
-                time.sleep(95)
-                if flipped_dir:
-                    with Motors:
-                        Motors.move_rel(10, 0, dirA=_dir)
-                with Motors:
-                    Motors.move_rel(24, 0, dirA=_dir)
 
-        elif mode=='square':
-            ''' 12 left and down, then twelve right and up/down etc.. '''
-
-            step_y = int(input("steps y: "))
-            step_x = int(input("steps x: "))
-            steps = (step_x, step_y)
-            exp_time = int(input("expose_time: "))
-            dir_v = input("direction: ")
-            self.litho(expose_time_seconds=exp_time)
-            time.sleep(exp_time+1)
-            for i in range(steps[1]):
-                for  j in range(steps[0]):
-                    print(f"time left: {steps[0] * steps[1] * exp_time - (i*exp_time + j*exp_time)}")
-                    with Motors:
-                        # if even move right. else left.
-                        # start moving left!
-                        if i % 2 != 0:
-                            Motors.move_rel(24, 0, dirA='right')
-                        else:
-                            Motors.move_rel(24, 0, dirA='left')
-                    self.litho(expose_time_seconds=exp_time)
-                    time.sleep(exp_time+1)
-                    if (steps[1] == 1) and (j == steps[0] - 1):
-                        return None
-                with Motors:
-
-                    Motors.move_rel(0, 6, dirB=dir_v)
-
-
-        return
 
     def load_map(self):
         # Go and grab the name of the shape and load the pre-made file of positions.

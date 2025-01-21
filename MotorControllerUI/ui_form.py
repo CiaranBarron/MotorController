@@ -111,7 +111,7 @@ class Ui_Dialog_MotorController(object):
         self.RIGHT.setShortcut(QCoreApplication.translate("Dialog_MotorController", u"Right", None))
 #endif // QT_CONFIG(shortcut)
         self.HOME.setText(QCoreApplication.translate("Dialog_MotorController", u"HOME", None))
-        self.X_POS_4.setPlainText(QCoreApplication.translate("Dialog_MotorController", u"steps\n"
+        self.X_POS_4.setPlainText(QCoreApplication.translate("Dialog_MotorController", u"um\n"
 "", None))
         self.HOME_CONOR.setText(QCoreApplication.translate("Dialog_MotorController", u"Home - but only for Conor", None))
     # retranslateUi
