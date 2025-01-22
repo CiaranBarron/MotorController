@@ -49,6 +49,10 @@ class MotorControllerQt(QWidget):
         self._4340_complete_dose = 140 * 3 #triple the recommended dose on the sheet. For some reason it works well though.
         self._pattern = False
 
+        # Bitmap exposure options
+        self._bitmap_color_choice = 'Black'
+        self._bitmap_square_size = 90 # um
+
         # Options for line and square patterns
         self._DIR1 = False
         self._DIR2 = False
@@ -87,6 +91,7 @@ class MotorControllerQt(QWidget):
         # BITMAP FUNCTION BUTTONS
         self.ui.LOAD_BITMAP.clicked.connect(self.load_bitmap)
         self.ui.RUN_BITMAP.clicked.connect(self.run_bitmap)
+        self.ui.BITMAP_SQUARE_SIZE
 
         # values of spin boxes & updates.
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
@@ -150,8 +155,6 @@ class MotorControllerQt(QWidget):
         self.populate_bitmap_list()
         self.add_stage_slide_display()
         # self.add_laser_slide_display()
-
-        self.ui.LOAD_BITMAP.clicked.connect(self.load_bitmap)
 
     def populate_bitmap_list(self):
         """
@@ -772,18 +775,40 @@ class MotorControllerQt(QWidget):
 
         scene = QGraphicsScene()
 
-        pixmap = QPixmap(f"../Backend/{self._bitmap_choice}")
+        print(f"{self._bitmap_choice}")
+        pixmap = QPixmap(f"../Backend/Bitmaps/{self._bitmap_choice}")
 
-        pixmap_ = scene.addPixmap(pixmap)
+        if pixmap.isNull():
+            print("Failed to load bitmap - check path/file size.")
 
-        self.ui.BITMAP_DISPLAY.setScene(pixmap_)
+        view_size = self.ui.BITMAP_DISPLAY.viewport().size()
+        print(view_size)
+        # resize the bitmap to the graphics view window size. The fast transformation maintain [0,255] values.
+        scaled_pixmap = pixmap.scaled(view_size.width(),
+                                      view_size.height(),
+                                      Qt.AspectRatioMode.IgnoreAspectRatio,
+                                      Qt.TransformationMode.FastTransformation)
+
+        scene.addPixmap(scaled_pixmap)
+
+        self.ui.BITMAP_DISPLAY.setScene(scene)
 
         return None
 
+    def bitmap2coords(self):
+        """
+        Convert a bitmap image to a set of coordinates to run an exposure on.
+        select the black of white tiles of the bitmap to expose depending on resist.
+        """
+        coords = []
+
+
+        return Coords
     def run_bitmap(self):
         """
         Convert bitmap to coords and step through that coord list in order exposing each step.
         """
+        return None
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

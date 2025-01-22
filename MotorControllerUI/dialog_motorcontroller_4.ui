@@ -884,7 +884,7 @@
     <string>Load Bitmap</string>
    </property>
   </widget>
-  <widget class="QLabel" name="BITMAP_SQUARE_SIZE">
+  <widget class="QLabel" name="_label_bitmap_size">
    <property name="geometry">
     <rect>
      <x>740</x>
@@ -897,7 +897,7 @@
     <string>square size (um): </string>
    </property>
   </widget>
-  <widget class="QDoubleSpinBox" name="doubleSpinBox">
+  <widget class="QDoubleSpinBox" name="BITMAP_SQUARE_SIZE">
    <property name="geometry">
     <rect>
      <x>850</x>
@@ -911,7 +911,7 @@
    <property name="geometry">
     <rect>
      <x>840</x>
-     <y>600</y>
+     <y>650</y>
      <width>75</width>
      <height>24</height>
     </rect>
@@ -941,6 +941,45 @@
    </property>
    <property name="maximum">
     <double>10000.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="EXPOSURE_COLOR_BLACK">
+   <property name="geometry">
+    <rect>
+     <x>800</x>
+     <y>620</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Black</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="_label_bitmap_color">
+   <property name="geometry">
+    <rect>
+     <x>740</x>
+     <y>600</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Squares to Expose:</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="EXPOSURE_COLOR_WHITE">
+   <property name="geometry">
+    <rect>
+     <x>860</x>
+     <y>620</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>White</string>
    </property>
   </widget>
  </widget>
