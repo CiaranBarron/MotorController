@@ -1,12 +1,15 @@
 # This Python file uses the following encoding: utf-8
 # Ciaran Barron 07.11.24
 
+import os
 import sys
 import time
 
 from serial import Serial
 
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QWidget, QGraphicsScene, QGraphicsEllipseItem
+from PySide6.QtGui import QBrush, QColor, QPen, QPainter, QPixmap
+from PySide6.QtCore import Qt
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
@@ -22,9 +25,9 @@ sys.path.insert(1, '../Backend')
 # ignore this error. The path insert solves it.
 from Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
 
-x_id = 842400280  # Motor id for x
-y_id = 842400780  # Motor id for y
-s_id = "FT7AX5XQ" # Serial number for motor controller board.
+# x_id = 842400280  # Motor id for x
+# y_id = 842400780  # Motor id for y
+# s_id = "FT7AX5XQ" # Serial number for motor controller board.
 
 
 class MotorControllerQt(QWidget):
@@ -54,6 +57,7 @@ class MotorControllerQt(QWidget):
         self._DIR1_no_steps = 0
         self._DIR2_step_size = 6
         self._DIR2_no_steps = 0
+        self._pattern_square_size = 90 # um
 
         # options for triangle pattern
         self._triangle_rows = 0
@@ -61,23 +65,32 @@ class MotorControllerQt(QWidget):
         self._triangle_y_step_size = 0
         self._triangle_x_step_size = 0
 
+        # for slide selection
+        self._slide_choice = False
+
+        # for bitmaps
+        self._bitmap_choice = False
+
         # no idea what this is even for tbh. leaving it here in case it breaks something.
         self._t = 0
 
         # Click actions linked to functions.
         self.ui.DO_IT.clicked.connect(self.doit_method)
         self.ui.HOME.clicked.connect(self.home)
+        self.ui.ABS_MOVE.clicked.connect(self._move)
         self.ui.EXPOSE.clicked.connect(self.expose)
         self.ui.UP.clicked.connect(lambda: self._move_rel_dir('up'))
         self.ui.DOWN.clicked.connect(lambda: self._move_rel_dir('down'))
         self.ui.LEFT.clicked.connect(lambda: self._move_rel_dir('left'))
         self.ui.RIGHT.clicked.connect(lambda: self._move_rel_dir('right'))
 
+        # BITMAP FUNCTION BUTTONS
+        self.ui.LOAD_BITMAP.clicked.connect(self.load_bitmap)
+        self.ui.RUN_BITMAP.clicked.connect(self.run_bitmap)
+
         # values of spin boxes & updates.
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
         self.ui.MOVE_MOTORS_ARROW_SETTING.valueChanged.connect(self.update_move_strength)  # does this change it?
-
-
 
         self.ui.LITHO_TIMER_SECONDS.setValue(90)
         self.ui.LITHO_TIMER_SECONDS.valueChanged.connect(self.update_exposure_time)
@@ -86,14 +99,9 @@ class MotorControllerQt(QWidget):
         self.ui.SQUARE_PATTERN_CHECK.stateChanged.connect(self.update_square_checkboxes)
         self.ui.TRIANGLE_PATTERN_CHECK.stateChanged.connect(self.update_triangle_checkboxes)
 
-        self.ui.DIR1_STEP_SIZE.valueChanged.connect(self.update_DIR1_step_size)
+        self.ui.PATTERN_SQUARE_SIZE.valueChanged.connect(self.update_pattern_square_size)
         self.ui.DIR1_NO_STEPS.valueChanged.connect(self.update_DIR1_no_steps)
-
-        self.ui.DIR2_STEP_SIZE.valueChanged.connect(self.update_DIR2_step_size)
         self.ui.DIR2_NO_STEPS.valueChanged.connect(self.update_DIR2_no_steps)
-
-        self.ui.TRIANGLE_X_STEPS.valueChanged.connect(self.update_triangle_x_steps)
-        self.ui.TRIANGLE_Y_STEPS.valueChanged.connect(self.update_triangle_y_steps)
         self.ui.TRIANGLE_ROWS.valueChanged.connect(self.update_triangle_rows)
         self.ui.TRIANGLE_START_SIZE.valueChanged.connect(self.update_triangle_start_size)
 
@@ -134,6 +142,69 @@ class MotorControllerQt(QWidget):
         self.ui.RADIO_4340.setDisabled(True)
         self.ui.RADIO_3120.setDisabled(True)
         self.ui.LITHO_DOSE.setDisabled(True)
+
+        # Adding list of slides to pull from. (graphically)
+        self.ui._SLIDE_LIST.itemClicked.connect(self.update_slide_choice)
+        self.ui.BITMAP_LIST.itemClicked.connect(self.update_bitmap_choice)
+
+        self.populate_bitmap_list()
+        self.add_stage_slide_display()
+        # self.add_laser_slide_display()
+
+        self.ui.LOAD_BITMAP.clicked.connect(self.load_bitmap)
+
+    def populate_bitmap_list(self):
+        """
+        List all the files in the bitmap folder as options in the list.
+        """
+        bitmap_list = os.listdir("../Backend/Bitmaps")
+        for bitmap in bitmap_list:
+            self.ui.BITMAP_LIST.addItem(bitmap)
+        return None
+
+    def update_bitmap_choice(self, item):
+        """
+        On selection just change the stored value of which file
+        """
+        self._bitmap_choice = item.text()
+        print(self._bitmap_choice)
+        return None
+
+    def add_stage_slide_display(self):
+        """Populate the SLIDE_DISPLAY with a QGraphicsScene."""
+        # Create a QGraphicsScene
+        scene = QGraphicsScene()
+
+        pen = QPen(QColor("red"))
+        pen.setWidth(2)
+        pen.setStyle(Qt.SolidLine)
+        # Add a rectangle to represent the slide
+        slide_width, slide_height = 112, 112
+        rect_ = scene.addRect(0, 0, slide_width, slide_height)
+        rect_.setPen(pen)
+        rect_.setBrush(QBrush(Qt.white))
+
+        # Add a red circle to represent the laser spot
+        laser_spot = QGraphicsEllipseItem(0, 0, 5, 5)
+        laser_spot.setBrush(QBrush(QColor("blue")))
+        laser_spot.setPos(slide_width // 2, slide_height // 2)  # Center position
+        scene.addItem(laser_spot)
+
+        # Set the scene to SLIDE_DISPLAY
+        self.ui.SLIDE_DISPLAY.setScene(scene)
+        self.ui.SLIDE_DISPLAY.setSceneRect(0, 0, slide_width, slide_height)
+        return None
+
+    def update_slide_choice(self, item):
+        """
+        change the graphic shown in the SLIDE_DISPLAY graphic.
+        The graphic will always have a red rectangle the side of the stage area. And a dor for current motor position.
+        This will overlay / change the slide around it.
+        """
+        self._slide_choice = item.text()
+        print(self._slide_choice)
+        return None
+
 
     def update_exposure_3120(self):
         if self.ui.RADIO_3120.isChecked():
@@ -178,11 +249,22 @@ class MotorControllerQt(QWidget):
             self.ui.LITHO_UV_POWER.setEnabled(True)
         else:
             self.ui.LITHO_UV_POWER.setDisabled(True)
+
+
+    def update_pattern_square_size(self):
+        """
+        update the local copy of the pattern square size. this is currently redundant as the function calls it directly.
+        Use this to verify the changes.
+        """
+        self._pattern_square_size = self.ui.PATTERN_SQUARE_SIZE.value()
+        return None
+
     def update_triangle_up_direction(self):
         if self.ui.TRIANGLE_UP.isChecked():
             self._TRIANGLE_DIR = "up"
             self.ui.TRIANGLE_DOWN.setChecked(False)
         return None
+
 
     def update_triangle_down_direction(self):
         if self.ui.TRIANGLE_DOWN.isChecked():
@@ -476,6 +558,9 @@ class MotorControllerQt(QWidget):
         """
         DO IT
         """
+        # remember to add a verification this number.
+        step_size = self.ui.PATTERN_SQUARE_SIZE.value()
+
         if self.ui.TRIANGLE_PATTERN_CHECK.isChecked():
             '''run triangle pattern - if start size > 1 go right to left. 
                   .
@@ -484,39 +569,47 @@ class MotorControllerQt(QWidget):
             TODO: Test patterning multiple shapes and directions. 
             '''
             start_size = self._triangle_start_size
+            if start_size < 1:
+                step_size = 1
+
             rows = self._triangle_rows
-            y_step = self._triangle_y_step_size
-            x_step = self._triangle_x_step_size
-            direction = self._TRIANGLE_DIR
+            if rows < 1:
+                rows = 1
+
+            dir_modifier = 1
+
+            if self._TRIANGLE_DIR == 'up':
+                y_dir_modifier = 1
+            else:
+                y_dir_modifier = -1
 
             for i in range(rows):
-                # 0 - rows
-                for j in range(start_size + i + 1):
-                    # 0 - start_size + i + 1
-                    # 0 + 1
+                # 0 -> rows
+                for j in range(start_size + 2 * i):
+                    # 0 -> start_size + 2 * rows[i] => grow per row by 2.
                     row_dir = 'right'
 
-                    if j == 0:
-                        self.litho(self._exposure_time)
-                        time.sleep(self._exposure_time)
-                        if i % 2 == 0:
-                            with Motors:
-                                Motors.move_rel(x_step, 0, dir=row_dir)
-                        else:
-                            row_dir = 'left'
-                            with Motors:
-                                Motors.move_rel(x_step, 0, dir=row_dir)
+                    self.litho(self._exposure_time)
+                    time.sleep(self._exposure_time)
 
+                    # move to the right.
+                    if i % 2 == 0:
+                        dir_modifier = 1
                     else:
-                        self.litho(self._exposure_time)
-                        time.sleep(self._exposure_time)
-                        with Motors:
-                            Motors.move_rel(x_step, 0, dir=row_dir)
+                        dir_modifier = -1
 
-                with Motors:
-                    Motors.move_rel(0, y_step, dir=direction)
+                    with LinearMotor(serial_number=s_id) as lm:
+                        lm.move_relative(x_id, dir_modifier * step_size)
 
-                return None
+                # move an extra step in the same direction and then move down one step.
+                with LinearMotor(serial_number=s_id) as lm:
+                    lm.move_relative(x_id, dir_modifier * step_size)
+
+                # move up/down one step size. (row)
+                with LinearMotor(serial_number=s_id) as lm:
+                    lm.move_relative(y_id, y_dir_modifier * step_size)
+
+            return None
 
         elif self.ui.SQUARE_PATTERN_CHECK.isChecked():
             '''TODO: test this on litho runs. Perhaps exclude certain direction combinations.'''
@@ -524,101 +617,142 @@ class MotorControllerQt(QWidget):
             rows = self._DIR1_no_steps
             cols = self._DIR2_no_steps
 
-            self.litho(self._exposure_time)
-            time.sleep(self._exposure_time)
+            row_id = x_id
+            col_id = y_id
+
+            # Handling which direction to send the motors for row and cols.
+            match self._DIR1:
+                case 'left':
+                    row_id = x_id
+                    col_id = y_id
+                case 'right':
+                    row_id = x_id
+                    col_id = y_id
+                case 'up':
+                    row_id = y_id
+                    col_id = x_id
+                case 'down':
+                    row_id = y_id
+                    col_id = x_id
+
+            if self._DIR2 == 'up' or self._DIR2 == 'down':
+                if self._DIR1 == 'left':
+                    row_dir_modifier = -1
+                else:
+                    row_dir_modifier = 1
+            else:
+                if self._DIR1 == 'up':
+                    row_dir_modifier = 1
+                else:
+                    row_dir_modifier = -1
+
 
             for i in range(rows):
 
                 for j in range(cols):
 
-                    with Motors:
-                        # if even move dir1, else opposite.
-                        if i % 2 == 0:
-                            match self._DIR1:
-                                case 'left':
-                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='left')
-                                case 'right':
-                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='right')
-                                case 'up':
-                                    Motors.move_rel(0, self._DIR1_step_size, dirB='up')
-                                case 'down':
-                                    Motors.move_rel(0, self._DIR1_step_size, dirB='down')
-                        else:
-                            match self._DIR1:
-                                case 'right':
-                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='left')
-                                case 'left':
-                                    Motors.move_rel(self._DIR1_step_size, 0, dirA='right')
-                                case 'down':
-                                    Motors.move_rel(0, self._DIR1_step_size, dirB='up')
-                                case 'up':
-                                    Motors.move_rel(0, self._DIR1_step_size, dirB='down')
+                    self.litho(self._exposure_time)
+                    time.sleep(self._exposure_time)
 
-                    # because the direction flip is shitty w.r.t. backlash,
-                    # this should be enough without a litho after each step in DIR2
+                    # move to the right.
+                    if i % 2 == 0:
+                        col_dir_modifier = 1
+                    else:
+                        col_dir_modifier = -1
 
-                    self.litho(expose_time_seconds=43)
-                    time.sleep(44)
+                    with LinearMotor(serial_number=s_id) as lm:
+                        lm.move_relative(row_id, col_dir_modifier * step_size)
 
-                with Motors:
-                    match self._DIR2:
-                        case 'left':
-                            Motors.move_rel(self._DIR2_step_size, 0, dirA='left')
-                        case 'right':
-                            Motors.move_rel(self._DIR2_step_size, 0, dirA='right')
-                        case 'up':
-                            Motors.move_rel(0, self._DIR2_step_size, dirB='up')
-                        case 'down':
-                            Motors.move_rel(0, self._DIR2_step_size, dirB='down')
+                with LinearMotor(serial_number=s_id) as lm:
+                    lm.move_relative(col_id, row_dir_modifier * step_size)
 
-                return None # this return is important. No touch.
+            return None # leave here is important.
 
         elif self.ui.LINE_PATTERN_CHECK.isChecked():
             '''run line pattern'''
-            steps = self._DIR2_no_steps
+            m_id = x_id
+            dir_modifier = 1
 
-            self.litho(expose_time_seconds=self._exposure_time)
-            time.sleep(self._exposure_time)
+            match self._DIR1:
+                case 'left':
+                    m_id = x_id
+                    dir_modifier = -1
+                case 'right':
+                    m_id = x_id
+                    dir_modifier = 1
+                case 'up':
+                    m_id = y_id
+                    dir_modifier = 1
+                case 'down':
+                    m_id = y_id
+                    dir_modifier = -1
+
+            steps = self._DIR1_no_steps
 
             for _ in range(steps):
-                match self._DIR1:
-                    case 'left':
-                        Motors.move_rel(self._DIR1_step_size, 0, dirA='left')
-                    case 'right':
-                        Motors.move_rel(self._DIR1_step_size, 0, dirA='right')
-                    case 'up':
-                        Motors.move_rel(0, self._DIR1_step_size, dirB='up')
-                    case 'down':
-                        Motors.move_rel(0, self._DIR1_step_size, dirB='down')
-                self.litho(expose_time_seconds=self._exposure_time)
+
+                self.litho(self._exposure_time)
                 time.sleep(self._exposure_time)
+
+                with LinearMotor(serial_number=s_id) as lm:
+                    lm.move_relative(m_id, dir_modifier * step_size)
+
+            return None
 
         else:
             print("Error: No Pattern selected.")
         return
 
     def home(self):
-        """Home the Motors. This should happen automatically in the arduino code at startup. Testing only."""
-        with Motors:
-            Motors.home()
+        """
+        Home the Motors. Builtin LinearMotor func
+        """
+        with LinearMotor(serial_number = s_id) as lm:
+            lm.home_motor(x_id)
+            lm.home_motor(y_id)
 
+    def verify_positions(x, y):
+        # some assertions here about the coordinates that you would be moving too. Might be redundant, check motor code.
+        return None
 
-    def _move(self, stepsA, stepsB):
-        with Motors:
-            Motors.move(stepsA, stepsB)
+    def _move(self):
+        """
+        Move the motors to a specific x,y position
+        """
+        # need to add some verification of the coords x and y before continuing.
+        x = self.ui.MOVE_MOTORS_ABS_SETTING_X.value()
+        y = self.ui.MOVE_MOTORS_ABS_SETTING_Y.value()
+
+        with LinearMotor(serial_number=s_id) as lm:
+
+            lm.move_absolute(x_id, x)
+            lm.move_absolute(y_id, y)
+
+            delta_pos = 74E-3 # define acceptable difference of 10 motor steps (73nm)
+            new_x = lm.steps2micron(lm.get_position(x_id))
+            new_y = lm.steps2micron(lm.get_position(y_id))
+
+            assert new_x - x > delta_pos, "Error: x position deviated by more than 10 steps"
+            assert new_y - y > delta_pos, "Error: y position deviated by more than 10 steps"
+
+            print(f"Motors moved to: {new_x, new_y}")
+
+            return None
 
     def _move_rel_dir(self, _dir):
-
-        with Motors:
+        """
+        Move motors in given direction, move_strength is signed micrometer value.
+        """
+        with LinearMotor(serial_number=s_id) as lm:
             match _dir:
                 case 'left':
-                    Motors.move_rel(self._move_strength, 0, dirA='left')
+                    lm.move_relative(x_id, self._move_strength)
                 case 'right':
-                    Motors.move_rel(self._move_strength, 0, dirA='right')
+                    lm.move_relative(x_id, -1 * self._move_strength)
                 case 'up':
-                    Motors.move_rel(0, self._move_strength, dirB='up')
+                    lm.move_relative(y_id, self._move_strength)
                 case 'down':
-                    Motors.move_rel(0, self._move_strength, dirB='down')
+                    lm.move_relative(y_id, -1 * self._move_strength)
 
     def litho(self, expose_time_seconds = 43):
 
@@ -631,47 +765,25 @@ class MotorControllerQt(QWidget):
             msg = s.readline().decode()
             print(msg)
 
-    def load(self, steps = 6, mode='square', flipped_dir=False, _dir='left'):
-        ''' Patterns for litho '''
 
-        if mode=='line':
-            # move_dir = 'right'
-            for _ in range(steps):
-                print(f"exposure {_} of {steps}")
-                self.litho()
-                time.sleep(95)
-                if flipped_dir:
-                    with Motors:
-                        Motors.move_rel(10, 0, dirA=_dir)
-                with Motors:
-                    Motors.move_rel(24, 0, dirA=_dir)
-
-        elif mode=='square':
-            ''' 12 left and up, then twelve right and up etc.. '''
-            steps = (12, 3)
-
-            self.litho(expose_time_seconds=43)
-            time.sleep(44)
-            for i in range(steps[1]):
-                for  j in range(steps[0]):
-                    with Motors:
-                        # if even move right. else left.
-                        if i % 2 != 0:
-                            Motors.move_rel(24, 0, dirA='right')
-                        else:
-                            Motors.move_rel(24, 0, dirA='left')
-                    self.litho(expose_time_seconds=43)
-                    time.sleep(44)
-                with Motors:
-                    Motors.move_rel(0, 6, dirB='down')
-
-
-        return
-
-    def load_map(self):
+    def load_bitmap(self):
         # Go and grab the name of the shape and load the pre-made file of positions.
         # Maybe auto generate
-        return
+
+        scene = QGraphicsScene()
+
+        pixmap = QPixmap(f"../Backend/{self._bitmap_choice}")
+
+        pixmap_ = scene.addPixmap(pixmap)
+
+        self.ui.BITMAP_DISPLAY.setScene(pixmap_)
+
+        return None
+
+    def run_bitmap(self):
+        """
+        Convert bitmap to coords and step through that coord list in order exposing each step.
+        """
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

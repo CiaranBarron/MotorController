@@ -37,6 +37,7 @@
     "Python.motorcontrollerqt.executor": "Run",
     "Python.motorcontrollerqt_2.executor": "Run",
     "Python.motorcontrollerqt_3.executor": "Run",
+    "Python.motorcontrollerqt_4.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/MotorControllerUI/UI_4_Layout.png",
@@ -52,7 +53,7 @@
       <recent name="C:\Users\LMA10\Documents\MotorController\Backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.motorcontrollerqt_3">
+  <component name="RunManager">
     <configuration name="LithoMotors" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MotorController" />
       <option name="ENV_FILES" value="" />
