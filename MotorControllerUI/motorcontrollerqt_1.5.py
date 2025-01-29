@@ -51,10 +51,10 @@ class MotorControllerQt(QWidget):
         # set values of spin boxes.
         self._move_strength = 10 # um - (default) named this badly. Back when it was steps.
         self._previous_exposure_time = 0 # record of last exposure time
-        self._uv_current = 0 # uv current (in spinbox, to be set)
-        self._uv_current_setting = 10 # mA
-        self._red_current = 0 # red current  (in spinbox, to be set)
-        self._red_current_setting = 30 # mA
+        self._uv_current = 10 # uv current (in spinbox, to be set)
+        self._uv_current_setting = 10 # mA - this is the value currently set
+        self._red_current = 10 # red current  (in spinbox, to be set)
+        self._red_current_setting = 30 # mA - this is the value currently set.
         self._exposure_time = 0 # the setting in the spinbox (to be sent)
 
         # Click actions
@@ -99,9 +99,19 @@ class MotorControllerQt(QWidget):
         return None
 
     def set_LED_currents(self):
-        """set the currents on the LEDs (set both each time)"""
+        """set the currents on the LEDs (set both each time). """
+
         self.litho_send(f"UV_I_SET,{self._uv_current}")
+        t = time.perf_counter()
+        self._uv_current_setting = self.get_uv_current()
+        print("time to get uv: ", time.perf_counter() - t)
+
+        t = time.perf_counter()
         self.litho_send(f"RED_I_SET,{self._red_current}")
+        self._red_current_setting = self.get_uv_current()
+        print("time to set and get red: ",time.perf_counter() - t)
+
+        print("DONE")
         self.update_LED_settings_list()
         return None
 
@@ -133,69 +143,84 @@ class MotorControllerQt(QWidget):
         Baudrate doesn't matter
 
         :OUTPUT:
-        int: getter - current/time settings on read_output.
+        str: *txt* value *txt* .split(' ')[-2] to access value.
         """
 
-        with Serial(self.litho_port, baudrate=115200, timeout=0.5) as s:
+        with Serial(self.litho_port, baudrate=9600, timeout=1) as s:
 
             s.write(f"<{message}>".encode())
-
+            # time.sleep(0.1)
             if exposure:
                 # I should deactivate all UI for this while loop.
-                self.set_enabled(False)
+                self.setEnabled(False)
 
                 # wait max 5 mins for a finished resopnse.
                 read_timeout = 300
                 start_time = time.perf_counter()
                 while time.perf_counter() - start_time < read_timeout:
+                    time.sleep(1)
                     msg = s.readline().decode()
                     if msg == "FIN":
-                        self.set_enabled(True)
+                        self.setEnabled(True)
                         self.update_previous_expose_time_ui()
                         break
                 # And reactivate UI here after it has recieved the FIN message.
-                self.set_enabled(True)
+                self.setEnabled(True)
                 print("Exposure timeout reached. Exiting. Light should also switch off. ")
 
             if read_output:
-                return s.readline().decode()
+                start_time = time.perf_counter()
+                while time.perf_counter() - start_time < 5:
+                    # awaiting response, if not found return error.
+                    if s.in_waiting > 0:
+                        msg = s.readline().decode()
+                        print(msg)
+                        return msg
+                return "Not data found. ERROR "
             else:
                 return None
 
 
     def get_last_exposure_time(self):
         """replace with correct getter syntax."""
-        return self.litho_send("UV_T_GET,0", read_output=True)
-
+        t = self.litho_send("UV_T_GET,0", read_output=True)
+        return t.split(' ')[-2]
 
     def get_uv_current(self):
         """replace with correct getter syntax."""
-        return self.litho_send("UV_I_GET,0", read_output=True)
-
+        x = self.litho_send("UV_I_GET,0", read_output=True)
+        return x.split(' ')[-2]
 
     def get_red_current(self):
         """replace with correct getter syntax."""
-        return self.litho_send("RED_I_GET,0", read_output=True)
-
+        y = self.litho_send("RED_I_GET,0", read_output=True)
+        return y.split(' ')[-2]
 
     def update_LED_settings_list(self):
         """Update the list widget with the LED current settings. These are pulled from the UV controller."""
+
         self.ui.LED_SETTINGS_BOX.clear()
         self.ui.LED_SETTINGS_BOX.addItem("LED Settings:")
 
-        uv_led_current_setting = self.get_uv_current()
-        red_led_current_setting = self.get_red_current()
+        t = time.perf_counter()
 
-        self.ui.LED_SETTINGS_BOX.addItem(f"RED: {red_led_current_setting} mA")
-        self.ui.LED_SETTINGS_BOX.addItem(f"UV: {uv_led_current_setting} mA")
+        uv_led_current_setting = self.get_uv_current()
+        print("time taken UV:", time.perf_counter() - t)
+
+        t = time.perf_counter()
+
+        red_led_current_setting = self.get_red_current()
+        print("time taken RED:", time.perf_counter() - t)
+
+        self.ui.LED_SETTINGS_BOX.addItem(f"UV: \t {uv_led_current_setting} mA")
+        self.ui.LED_SETTINGS_BOX.addItem(f"RED:\t {red_led_current_setting} mA")
 
         return None
 
     def update_previous_expose_time_ui(self):
         """Ask the UV controller for the stored value for last exposure time. Set it on the UI."""
-        _exp_time_string = self.litho_send(f"UV_T_GET,0",read_output=True)
-        self.ui.PREVIOUS_EXPOSURE_TIME_.setText(_exp_time_string)
-
+        _exp_time_string = self.get_last_exposure_time()
+        self.ui.PREVIOUS_EXPOSURE_TIME_.setText(f"Last exposure time: {_exp_time_string} s")
         return None
 
     def update_move_strength(self):
