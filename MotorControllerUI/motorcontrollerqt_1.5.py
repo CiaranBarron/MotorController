@@ -90,17 +90,18 @@ class MotorControllerQt(QWidget):
         return None
 
     def expose(self):
-        self.litho_send(str(self._exposure_time))
-        self.update_previous_expose_time_ui()
-        return None
+        """
+        UV light to turn on for set amount of time. Time pulled from UI.
 
-    def get_LED_currents(self):
+        """
+        self.litho_send(f"UV_T_SET,{self._exposure_time}")
+        self.update_previous_expose_time_ui()
         return None
 
     def set_LED_currents(self):
         """set the currents on the LEDs (set both each time)"""
-        self.litho_send(str(self._uv_current))
-        self.litho_send(str(self._red_current))
+        self.litho_send(f"UV_I_SET,{self._uv_current}")
+        self.litho_send(f"RED_I_SET,{self._red_current}")
         self.update_LED_settings_list()
         return None
 
@@ -110,12 +111,25 @@ class MotorControllerQt(QWidget):
         baudrate doesn't matter for this controller (SparkFun Pro Micro)
 
         :PARAMS:
-        str - command from the list:
-        1. UV current set
-        2. RED current set
-        3. UV current get
-        4. RED current get
-        5. EXpose for X seconds
+        =========== Command Summary ==========
+        <H,_>              : This help file
+        <RED_I_SET,VALUE>  : Set RED current to VALUE (mA)
+        <RED_I_GET,_>      : Get RED current (mA)
+        <UV_I_SET,VALUE>   : Set UV current to VALUE (mA)
+        <UV_I_GET,_>       : Get UV current (mA)
+        <UV_T_SET,VALUE>   : Set UV On Time to VALUE & turn on for value (secs)
+        <UV_T_GET,_>       : Get UV On Time (secs)
+        <CAM_SET,0>        : Disable camera
+        <CAM_SET,1>        : Enable camera
+        <CAM_GET,_>        : Query camera state
+        <ALL,0>            : Turn off both RED and UV
+        
+        > Example: <RED_I_SET,100> to set RED current to 100mA
+        > Example: <UV_I_SET,200> to set UV current to 200mA
+        > Example: <CAM,1> to enable camera
+        > Example: <ALL,0> to turn off both RED and UV
+
+        Baudrate doesn't matter
 
         :OUTPUT:
         int: getter - current settings, exposure time - the time itself, else none.
@@ -123,7 +137,7 @@ class MotorControllerQt(QWidget):
 
         with Serial(self.litho_port, baudrate=115200, timeout=0.5) as s:
 
-            s.write(f"<{message}".encode())
+            s.write(f"<{message}>".encode())
 
             if read_output:
                 return s.readline().decode()
@@ -133,17 +147,17 @@ class MotorControllerQt(QWidget):
 
     def get_last_exposure_time(self):
         """replace with correct getter syntax."""
-        return self.litho_send(f"<get_exposure_time>".encode(), read_output=True)
+        return self.litho_send("UV_T_GET,0", read_output=True)
 
 
     def get_uv_current(self):
         """replace with correct getter syntax."""
-        return self.litho_send(f"<get_uv_current>".encode(), read_output=True)
+        return self.litho_send("UV_I_GET,0", read_output=True)
 
 
     def get_red_current(self):
         """replace with correct getter syntax."""
-        return self.litho_send(f"<get_red_current>".encode(), read_output=True)
+        return self.litho_send("RED_I_GET,0", read_output=True)
 
 
     def update_LED_settings_list(self):
@@ -154,15 +168,13 @@ class MotorControllerQt(QWidget):
         uv_led_current_setting = self.get_uv_current()
         red_led_current_setting = self.get_red_current()
 
-        uv_led_current_setting = self._uv_current
-
         self.ui.LED_SETTINGS_BOX.addItem(f"RED: {red_led_current_setting} mA")
         self.ui.LED_SETTINGS_BOX.addItem(f"UV: {uv_led_current_setting} mA")
 
         return None
 
     def update_previous_expose_time_ui(self):
-        _exp_time_string = f"Most Recent Exposure Time: {self.get_last_exposure_time()}"
+        _exp_time_string = self.litho_send(f"UV_T_GET,0",read_output=True)
         self.ui.PREVIOUS_EXPOSURE_TIME_.setText(_exp_time_string)
 
         return None
