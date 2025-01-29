@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
-from ui_form import Ui_Dialog_MotorController
+from ui_form_1p5 import Ui_Dialog_MotorController
 
 # This line allows the file to see back up one directory because I have the motor control script in a different folder.
 sys.path.insert(1, '../Backend')
@@ -44,13 +44,24 @@ class MotorControllerQt(QWidget):
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
 
+        # set this here or find it every time you want to connect?
+        # No one is going to unplug it mid session. Right??. oh no.
+        self.litho_port = find_litho_port()
+
         # set values of spin boxes.
         self._move_strength = 10 # um - (default) named this badly. Back when it was steps.
+        self._previous_exposure_time = 0 # record of last exposure time
+        self._uv_current = 0 # uv current (in spinbox, to be set)
+        self._uv_current_setting = 10 # mA
+        self._red_current = 0 # red current  (in spinbox, to be set)
+        self._red_current_setting = 30 # mA
+        self._exposure_time = 0 # the setting in the spinbox (to be sent)
 
         # Click actions
         # self.ui.DO_IT.clicked.connect(self.doit_method)
         self.ui.HOME.clicked.connect(self.home)
-        self.ui.LOAD_ROUTE.clicked.connect(self.load)
+        self.ui.EXPOSE.clicked.connect(self.expose)
+        self.ui.SET_LED_CURRENTS.clicked.connect(self.set_LED_currents)
         self.ui.HOME_CONOR.clicked.connect(self.home_conor)
         self.ui.UP.clicked.connect(lambda: self._move_rel_dir('up'))
         self.ui.DOWN.clicked.connect(lambda: self._move_rel_dir('down'))
@@ -58,10 +69,103 @@ class MotorControllerQt(QWidget):
         self.ui.RIGHT.clicked.connect(lambda: self._move_rel_dir('right'))
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
         self.ui.MOVE_MOTORS_ARROW_SETTING.valueChanged.connect(self.update_move_strength)  # does this change it?
+        self.ui.RED_CURRENT_SETTING.valueChanged.connect(self.update_red_current_setting)
+        self.ui.UV_CURRENT_SETTING.valueChanged.connect(self.update_uv_current_setting)
+        self.ui.EXPOSURE_TIME_SETTING.valueChanged.connect(self.update_exposure_setting)
+
+        # Update on open with current settings.
+        self.update_LED_settings_list()
+        self.update_previous_expose_time_ui()
+
+    def update_exposure_setting(self):
+        self._exposure_time = self.ui.EXPOSURE_TIME_SETTING.value()
+        return None
+
+    def update_red_current_setting(self):
+        self._red_current = self.ui.RED_CURRENT_SETTING.value()
+        return None
+
+    def update_uv_current_setting(self):
+        self._uv_current = self.ui.UV_CURRENT_SETTING.value()
+        return None
+
+    def expose(self):
+        self.litho_send(str(self._exposure_time))
+        self.update_previous_expose_time_ui()
+        return None
+
+    def get_LED_currents(self):
+        return None
+
+    def set_LED_currents(self):
+        """set the currents on the LEDs (set both each time)"""
+        self.litho_send(str(self._uv_current))
+        self.litho_send(str(self._red_current))
+        self.update_LED_settings_list()
+        return None
+
+    def litho_send(self, message: str, read_output=False):
+        """
+        Connect to litho controller and send message.
+        baudrate doesn't matter for this controller (SparkFun Pro Micro)
+
+        :PARAMS:
+        str - command from the list:
+        1. UV current set
+        2. RED current set
+        3. UV current get
+        4. RED current get
+        5. EXpose for X seconds
+
+        :OUTPUT:
+        int: getter - current settings, exposure time - the time itself, else none.
+        """
+
+        with Serial(self.litho_port, baudrate=115200, timeout=0.5) as s:
+
+            s.write(f"<{message}".encode())
+
+            if read_output:
+                return s.readline().decode()
+            else:
+                return None
 
 
+    def get_last_exposure_time(self):
+        """replace with correct getter syntax."""
+        return self.litho_send(f"<get_exposure_time>".encode(), read_output=True)
 
-    # :REMOVED: do_it method - not used in basic.
+
+    def get_uv_current(self):
+        """replace with correct getter syntax."""
+        return self.litho_send(f"<get_uv_current>".encode(), read_output=True)
+
+
+    def get_red_current(self):
+        """replace with correct getter syntax."""
+        return self.litho_send(f"<get_red_current>".encode(), read_output=True)
+
+
+    def update_LED_settings_list(self):
+        """Update the list widget with the LED current settings. (get from controller)"""
+        self.ui.LED_SETTINGS_BOX.clear()
+        self.ui.LED_SETTINGS_BOX.addItem("LED Settings:")
+
+        uv_led_current_setting = self.get_uv_current()
+        red_led_current_setting = self.get_red_current()
+
+        uv_led_current_setting = self._uv_current
+
+        self.ui.LED_SETTINGS_BOX.addItem(f"RED: {red_led_current_setting} mA")
+        self.ui.LED_SETTINGS_BOX.addItem(f"UV: {uv_led_current_setting} mA")
+
+        return None
+
+    def update_previous_expose_time_ui(self):
+        _exp_time_string = f"Most Recent Exposure Time: {self.get_last_exposure_time()}"
+        self.ui.PREVIOUS_EXPOSURE_TIME_.setText(_exp_time_string)
+
+        return None
 
     def update_move_strength(self):
         """
@@ -88,7 +192,6 @@ class MotorControllerQt(QWidget):
 
         self.update_list_widget_with_position()
 
-
     def update_list_widget_with_position(self):
 
         self.ui.listWidget.clear()
@@ -97,11 +200,9 @@ class MotorControllerQt(QWidget):
             x_pos = lm.steps2micron(lm.get_position(x_id))
             y_pos = lm.steps2micron(lm.get_position(y_id))
 
+        self.ui.listWidget.addItem("Motor Positions")
         self.ui.listWidget.addItem(f"X: {round(x_pos,1)}")
         self.ui.listWidget.addItem(f"Y: {round(y_pos,1)}")
-
-
-
 
     def home_conor(self):
         """
@@ -117,8 +218,6 @@ class MotorControllerQt(QWidget):
 
         print(f"Motors set to: {home_x},{home_y}")
         self.update_list_widget_with_position()
-
-
     def _move_rel_dir(self, _dir):
 
         with LinearMotor(serial_number=s_id) as lm:
@@ -157,69 +256,6 @@ class MotorControllerQt(QWidget):
         self.update_list_widget_with_position()
 
         return None
-
-    def litho(self, expose_time_seconds = 90):
-        """
-        Separate to motor control.
-        """
-        with Serial('COM3', baudrate=115200, timeout=0.5) as s:
-
-            s.readline()
-            _message = f"<{expose_time_seconds}>".encode()
-            s.write(_message)
-            msg = s.readline().decode()
-            print(msg)
-
-    def load(self, steps = 6, mode='square', flipped_dir=False, _dir='left'):
-        ''' Patterns for litho '''
-        #
-        # if mode=='line':
-        #     # move_dir = 'right'
-        #     for _ in range(steps):
-        #         print(f"exposure {_} of {steps}")
-        #         self.litho()
-        #         time.sleep(95)
-        #         if flipped_dir:
-        #             with Motors:
-        #                 Motors.move_rel(10, 0, dirA=_dir)
-        #         with Motors:
-        #             Motors.move_rel(24, 0, dirA=_dir)
-        #
-        # elif mode=='square':
-        #     ''' 12 left and down, then twelve right and up/down etc.. '''
-        #
-        #     step_y = int(input("steps y: "))
-        #     step_x = int(input("steps x: "))
-        #     steps = (step_x, step_y)
-        #     exp_time = int(input("expose_time: "))
-        #     dir_v = input("direction: ")
-        #     self.litho(expose_time_seconds=exp_time)
-        #     time.sleep(exp_time+1)
-        #     for i in range(steps[1]):
-        #         for  j in range(steps[0]):
-        #             print(f"time left: {steps[0] * steps[1] * exp_time - (i*exp_time + j*exp_time)}")
-        #             with Motors:
-        #                 # if even move right. else left.
-        #                 # start moving left!
-        #                 if i % 2 != 0:
-        #                     Motors.move_rel(24, 0, dirA='right')
-        #                 else:
-        #                     Motors.move_rel(24, 0, dirA='left')
-        #             self.litho(expose_time_seconds=exp_time)
-        #             time.sleep(exp_time+1)
-        #             if (steps[1] == 1) and (j == steps[0] - 1):
-        #                 return None
-        #         with Motors:
-        #
-        #             Motors.move_rel(0, 6, dirB=dir_v)
-        #
-        #
-        # return
-
-    def load_map(self):
-        # Go and grab the name of the shape and load the pre-made file of positions.
-        # Maybe auto generate
-        return
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

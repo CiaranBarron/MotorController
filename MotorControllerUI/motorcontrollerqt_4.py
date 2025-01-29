@@ -6,10 +6,12 @@ import sys
 import time
 
 from serial import Serial
+from serial.tools import list_ports
 
 from PySide6.QtWidgets import QApplication, QWidget, QGraphicsScene, QGraphicsEllipseItem
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter, QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QRectF
+from PIL import Image
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
@@ -25,9 +27,18 @@ sys.path.insert(1, '../Backend')
 # ignore this error. The path insert solves it.
 from Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
 
-# x_id = 842400280  # Motor id for x
-# y_id = 842400780  # Motor id for y
-# s_id = "FT7AX5XQ" # Serial number for motor controller board.
+y_id = 842400280  # Motor id for x
+x_id = 842400780  # Motor id for y
+s_id = "FT7AX5XQA" # Serial number for motor controller board.
+
+def find_litho_port(description='SparkFun Pro Micro'):
+    ports = list_ports.comports(include_links=True)
+    if len(ports) > 0:
+        for p in ports:
+            if p.description == description:
+                print(f'Litho USB Port: {p.device}')
+                return p.device
+    raise Exception("Litho Controller not found. Check it is connected.")
 
 
 class MotorControllerQt(QWidget):
@@ -74,6 +85,7 @@ class MotorControllerQt(QWidget):
 
         # for bitmaps
         self._bitmap_choice = False
+        self._bitmap_expose_color = 'black'
 
         # no idea what this is even for tbh. leaving it here in case it breaks something.
         self._t = 0
@@ -91,7 +103,10 @@ class MotorControllerQt(QWidget):
         # BITMAP FUNCTION BUTTONS
         self.ui.LOAD_BITMAP.clicked.connect(self.load_bitmap)
         self.ui.RUN_BITMAP.clicked.connect(self.run_bitmap)
-        self.ui.BITMAP_SQUARE_SIZE
+        self.ui.BITMAP_SQUARE_SIZE.valueChanged.connect(self.update_bitmap_square_size)
+        self.ui.EXPOSURE_COLOR_BLACK.setChecked(True)
+        self.ui.EXPOSURE_COLOR_BLACK.clicked.connect(self.update_bitmap_expose_color_black)
+        self.ui.EXPOSURE_COLOR_WHITE.clicked.connect(self.update_bitmap_expose_color_white)
 
         # values of spin boxes & updates.
         self.ui.MOVE_MOTORS_ARROW_SETTING.setValue(self._move_strength)  # set default value in spin box.
@@ -151,10 +166,39 @@ class MotorControllerQt(QWidget):
         # Adding list of slides to pull from. (graphically)
         self.ui._SLIDE_LIST.itemClicked.connect(self.update_slide_choice)
         self.ui.BITMAP_LIST.itemClicked.connect(self.update_bitmap_choice)
+        self.ui.BITMAP_SQUARE_SIZE.setValue(10)
 
         self.populate_bitmap_list()
         self.add_stage_slide_display()
         # self.add_laser_slide_display()
+
+    def update_bitmap_expose_color_black(self):
+        if self.ui.EXPOSURE_COLOR_BLACK.isChecked():
+            self._bitmap_expose_color = 'black'
+            self.ui.EXPOSURE_COLOR_WHITE.setChecked(False)
+        else:
+            self._bitmap_expose_color = 'white'
+
+    def update_bitmap_expose_color_white(self):
+        if self.ui.EXPOSURE_COLOR_WHITE.isChecked():
+            self._bitmap_expose_color = 'white'
+            self.ui.EXPOSURE_COLOR_BLACK.setChecked(False)
+        else:
+            self._bitmap_expose_color = 'black'
+    def update_bitmap_square_size(self):
+        """
+        Update on value change the square size used for bitmap to coords conversion.
+        """
+        square_size = self.ui.BITMAP_SQUARE_SIZE.value()
+
+        if square_size < 1:
+            square_size = 1
+        if square_size > 90:
+            square_size = 90
+
+        self._pattern_square_size = square_size
+
+        return None
 
     def populate_bitmap_list(self):
         """
@@ -749,13 +793,13 @@ class MotorControllerQt(QWidget):
         with LinearMotor(serial_number=s_id) as lm:
             match _dir:
                 case 'left':
-                    lm.move_relative(x_id, self._move_strength)
+                    lm.move_relative(x_id, 1 * self._move_strength)
                 case 'right':
                     lm.move_relative(x_id, -1 * self._move_strength)
                 case 'up':
-                    lm.move_relative(y_id, self._move_strength)
-                case 'down':
                     lm.move_relative(y_id, -1 * self._move_strength)
+                case 'down':
+                    lm.move_relative(y_id, 1 * self._move_strength)
 
     def litho(self, expose_time_seconds = 43):
 
@@ -799,15 +843,110 @@ class MotorControllerQt(QWidget):
         """
         Convert a bitmap image to a set of coordinates to run an exposure on.
         select the black of white tiles of the bitmap to expose depending on resist.
+        :NOTE: the bitmap image needs to be set or this will raise an error.
+        :NOTE: The corrdinates will centre on the current locaiton of the laser spot.
         """
-        coords = []
+        # needs these values to be set:
+        expose_color = self._bitmap_expose_color
+        step_size = self._bitmap_square_size
 
+        with LinearMotor(serial_number = s_id) as lm:
+            current_x_pos = lm.steps2micron(lm.get_position(x_id))
+            current_y_pos = lm.steps2micron(lm.get_position(y_id))
 
-        return Coords
+        if expose_color == 'black':
+            color_setting = 0
+        else:
+            color_setting = 255
+
+        coordinates = []
+
+        assert self._bitmap_choice != False, "select a bitmap image first!"
+
+        # the convert is for grayscale but shouldn't be needed.
+        image = Image.open(f"../Backend/Bitmaps/{self._bitmap_choice}").convert("L")
+        width, height = image.size # should be square for testing, but code doesn't require it.
+
+        # these are stored for later function, convenient to store it here.
+        self._bitmap_height = height
+        self._bitmap_width = width
+
+        if width % 2 != 0:
+            x_offset = current_x_pos - ((width - 1) / 2)
+        else:
+            x_offset = current_x_pos - (width / 2)
+
+        if height % 2 != 0:
+            y_offset = current_y_pos - ((height - 1) / 2)
+        else:
+            y_offset = current_y_pos - (height / 2)
+
+        pixels = image.load()
+
+        # loop over image and create coordinate list. should move across a row, then down
+        for col in range(width):
+            for row in range(height):
+                if pixels[col, row] == color_setting:
+                    x_coord = col * step_size + x_offset
+                    y_coord = row * step_size + y_offset
+                    coordinates.append((x_coord, y_coord))
+
+        return coordinates, x_offset, y_offset
+
+    def coordinate2bitmapIndex(self, coordinate, x_offset, y_offset):
+        """
+        Convert the X and Y coordinate to a location on the Bitmap.
+        """
     def run_bitmap(self):
         """
         Convert bitmap to coords and step through that coord list in order exposing each step.
+        The coloring of the exposed areas is in need of
         """
+        coordinates, x_offset, y_offset = self.bitmap2coords()
+        scene = self.ui.BITMAP_DISPLAY.scene()
+
+
+        for i in range(len(coordinates)):
+
+            coord = coordinates[i]
+            if i==10:
+                break
+
+            print(f"x: {coord[0]}, y: {coord[1]}")
+
+            pen = QPen(QColor("red"))
+            pen.setWidth(1)
+            brush = QColor("red")
+            # grab the bitmap display scene.
+            rect_x = self._bitmap_width * i
+            rect_y = self._bitmap_height * i
+            rect_w = 10
+            rect_h = 10
+            rect = QRectF( rect_x, rect_y, rect_w, rect_h)
+
+            scene.addRect(rect, pen, brush)
+
+            self.ui.BITMAP_DISPLAY.setScene(scene)
+
+            time.sleep(0.1)
+
+            # color the rectangles on the bitmap grphic coz why not.
+
+        # loop over coordinate list, move to coords, expose. repeat.
+        # for coord in coordinates:
+        #     x = coord[0]
+        #     y = coord[1]
+        #
+        #     # move to position
+        #     with LinearMotor(serial_number  = s_id) as lm:
+        #         lm.move_absolute(x_id, x)
+        #         lm.move_absolute(y_id, y)
+
+            # self.litho(self._exposure_time)
+            # time.sleep(self._exposure_time)
+            # time.sleep(0.1)
+
+
         return None
 
 if __name__ == "__main__":

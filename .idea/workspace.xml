@@ -35,17 +35,19 @@
     "Python.LithoMotors.executor": "Run",
     "Python.SerialDeviceBase.executor": "Run",
     "Python.motorcontrollerqt.executor": "Run",
+    "Python.motorcontrollerqt_1.5.executor": "Run",
     "Python.motorcontrollerqt_2.executor": "Run",
     "Python.motorcontrollerqt_3.executor": "Run",
     "Python.motorcontrollerqt_4.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/MotorControllerUI/UI_4_Layout.png",
+    "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/MotorControllerUI",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\LMA10\Documents\MotorController\MotorControllerUI" />
       <recent name="C:\Users\LMA10\Documents\PCOEdgeGUI-Litho" />
       <recent name="C:\Users\LMA10\Documents\MotorController\Backend\StepperMotorEEPROMStorage" />
     </key>
