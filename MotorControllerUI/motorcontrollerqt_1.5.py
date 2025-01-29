@@ -1,5 +1,5 @@
 # This Python file uses the following encoding: utf-8
-# Ciaran Barron 16.06.24
+# Ciaran Barron 29.01.25
 
 import sys
 import time
@@ -21,8 +21,8 @@ sys.path.insert(1, '../Backend')
 # ignore this error. The path insert solves it.
 from Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
 
-y_id = 842400280  # Motor id for x
-x_id = 842400780  # Motor id for y
+y_id = 842400280  # Motor id for y motion
+x_id = 842400780  # Motor id for x motion
 s_id = "FT7AX5XQA" # Serial number for motor controller board.
 
 def find_litho_port(description='SparkFun Pro Micro'):
@@ -45,7 +45,7 @@ class MotorControllerQt(QWidget):
         self.ui.setupUi(self)
 
         # set this here or find it every time you want to connect?
-        # No one is going to unplug it mid session. Right??. oh no.
+        # No one is going to unplug it mid session. Right??? oh no.
         self.litho_port = find_litho_port()
 
         # set values of spin boxes.
@@ -78,23 +78,23 @@ class MotorControllerQt(QWidget):
         self.update_previous_expose_time_ui()
 
     def update_exposure_setting(self):
+        """This is the spinbox ui value - the exposure time you want to use. """
         self._exposure_time = self.ui.EXPOSURE_TIME_SETTING.value()
         return None
 
     def update_red_current_setting(self):
+        """This is the spinbox ui value - the current you want to use. """
         self._red_current = self.ui.RED_CURRENT_SETTING.value()
         return None
 
     def update_uv_current_setting(self):
+        """This is the spinbox ui value - the current you want to use. """
         self._uv_current = self.ui.UV_CURRENT_SETTING.value()
         return None
 
     def expose(self):
-        """
-        UV light to turn on for set amount of time. Time pulled from UI.
-
-        """
-        self.litho_send(f"UV_T_SET,{self._exposure_time}")
+        """UV light to turn on for set amount of time. Time pulled from UI."""
+        self.litho_send(f"UV_T_SET,{self._exposure_time}", exposure=True)
         self.update_previous_expose_time_ui()
         return None
 
@@ -105,10 +105,11 @@ class MotorControllerQt(QWidget):
         self.update_LED_settings_list()
         return None
 
-    def litho_send(self, message: str, read_output=False):
+    def litho_send(self, message: str, read_output=False, exposure=False):
         """
         Connect to litho controller and send message.
-        baudrate doesn't matter for this controller (SparkFun Pro Micro)
+        if read_output is for getter commands.
+        if exposure is to switch off the ui while the exposure is happening.
 
         :PARAMS:
         =========== Command Summary ==========
@@ -123,7 +124,7 @@ class MotorControllerQt(QWidget):
         <CAM_SET,1>        : Enable camera
         <CAM_GET,_>        : Query camera state
         <ALL,0>            : Turn off both RED and UV
-        
+
         > Example: <RED_I_SET,100> to set RED current to 100mA
         > Example: <UV_I_SET,200> to set UV current to 200mA
         > Example: <CAM,1> to enable camera
@@ -132,12 +133,29 @@ class MotorControllerQt(QWidget):
         Baudrate doesn't matter
 
         :OUTPUT:
-        int: getter - current settings, exposure time - the time itself, else none.
+        int: getter - current/time settings on read_output.
         """
 
         with Serial(self.litho_port, baudrate=115200, timeout=0.5) as s:
 
             s.write(f"<{message}>".encode())
+
+            if exposure:
+                # I should deactivate all UI for this while loop.
+                self.set_enabled(False)
+
+                # wait max 5 mins for a finished resopnse.
+                read_timeout = 300
+                start_time = time.perf_counter()
+                while time.perf_counter() - start_time < read_timeout:
+                    msg = s.readline().decode()
+                    if msg == "FIN":
+                        self.set_enabled(True)
+                        self.update_previous_expose_time_ui()
+                        break
+                # And reactivate UI here after it has recieved the FIN message.
+                self.set_enabled(True)
+                print("Exposure timeout reached. Exiting. Light should also switch off. ")
 
             if read_output:
                 return s.readline().decode()
@@ -161,7 +179,7 @@ class MotorControllerQt(QWidget):
 
 
     def update_LED_settings_list(self):
-        """Update the list widget with the LED current settings. (get from controller)"""
+        """Update the list widget with the LED current settings. These are pulled from the UV controller."""
         self.ui.LED_SETTINGS_BOX.clear()
         self.ui.LED_SETTINGS_BOX.addItem("LED Settings:")
 
@@ -174,6 +192,7 @@ class MotorControllerQt(QWidget):
         return None
 
     def update_previous_expose_time_ui(self):
+        """Ask the UV controller for the stored value for last exposure time. Set it on the UI."""
         _exp_time_string = self.litho_send(f"UV_T_GET,0",read_output=True)
         self.ui.PREVIOUS_EXPOSURE_TIME_.setText(_exp_time_string)
 
