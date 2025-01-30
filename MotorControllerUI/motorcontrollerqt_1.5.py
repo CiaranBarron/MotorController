@@ -72,10 +72,16 @@ class MotorControllerQt(QWidget):
         self.ui.RED_CURRENT_SETTING.valueChanged.connect(self.update_red_current_setting)
         self.ui.UV_CURRENT_SETTING.valueChanged.connect(self.update_uv_current_setting)
         self.ui.EXPOSURE_TIME_SETTING.valueChanged.connect(self.update_exposure_setting)
-
+        self.ui.UV_ON_CHECKBOX.stateChanged.connect(self.update_uv_light_on())
         # Update on open with current settings.
         self.update_LED_settings_list()
         self.update_previous_expose_time_ui()
+
+    def update_uv_light_on(self):
+        if self.ui.UV_ON_CHECKBOX.isChecked():
+            self.litho_send("UV_T_SET, -1", read_output=False)
+        else:
+            self.litho_send("UV_T_SET, 0", read_output=False)
 
     def update_exposure_setting(self):
         """This is the spinbox ui value - the exposure time you want to use. """
