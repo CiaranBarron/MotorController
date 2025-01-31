@@ -102,6 +102,10 @@ class MotorControllerQt(QWidget):
         self.ui.LED_SETTINGS_BOX.addItem(f"UV: \t {uv_led_current_setting} mA")
         self.ui.LED_SETTINGS_BOX.addItem(f"RED:\t {red_led_current_setting} mA")
 
+        # also update the spin boxes on the ui.
+        self.ui.UV_CURRENT_SETTING.setValue(int(uv_led_current_setting))
+        self.ui.RED_CURRENT_SETTING.setValue(int(red_led_current_setting))
+
         return None
 
     def update_previous_expose_time_ui(self):
