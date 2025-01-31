@@ -1,5 +1,5 @@
 # This Python file uses the following encoding: utf-8
-# Ciaran Barron 30.01.25
+# Ciaran Barron 31.01.25
 import time
 
 from serial import Serial
@@ -34,9 +34,9 @@ class LEDController:
         self._board_description = board_description
         self._port = False
 
-        # These are the values for the LED currents that the LEDS are set to.
-        self._red_current = 0
-        self._uv_current = 0
+        # These are the values for the LED currents that the LEDS are set to. SET to Ciaran's Default.
+        self._red_current = 30
+        self._uv_current = 400
 
         # the time of the last exposure.
         self._last_exposure = 0
@@ -63,7 +63,7 @@ class LEDController:
             ser.write(f"<UV_I_SET,{uv}>\n".encode())
             ser.write(f"RED_I_SET,{red}>\n".encode())
 
-    def get_led_current(self):
+    def get_led_currents(self):
         """retrieve the state of the LED (mA setting no whether it is on or off)"""
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
 
@@ -83,7 +83,7 @@ class LEDController:
 
         return self._uv_current, self._red_current
 
-    def get_last_exposure(self):
+    def get_last_exposure_time(self):
 
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
             ser.write(f"<UV_T_GET,0>\n".encode())
@@ -114,7 +114,7 @@ class LEDController:
 
 
 if __name__ == '__main__':
-    
+
     # test the port and read/write
     leds = LEDController()
 

@@ -1,5 +1,5 @@
 # This Python file uses the following encoding: utf-8
-# Ciaran Barron 29.01.25
+# Ciaran Barron 31.01.25
 
 import sys
 import time
@@ -9,33 +9,22 @@ from serial.tools import list_ports
 
 from PySide6.QtWidgets import QApplication, QWidget
 
-# Important:
-# You need to run the following command to generate the ui_form.py file
-#     pyside6-uic form.ui -o ui_form.py, or
-#     pyside2-uic form.ui -o ui_form.py
 from ui_form_1p5 import Ui_Dialog_MotorController
 
 # This line allows the file to see back up one directory because I have the motor control script in a different folder.
 sys.path.insert(1, '../Backend')
 
 # ignore this error. The path insert solves it.
-from Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
+from Backend.Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
+from Backend import LithographyController
 
-y_id = 842400280  # Motor id for y motion
-x_id = 842400780  # Motor id for x motion
-s_id = "FT7AX5XQA" # Serial number for motor controller board.
+y_id = 842400280    # Motor id for y motion
+x_id = 842400780    # Motor id for x motion
+s_id = "FT7AX5XQA"  # Serial number for motor controller board.
 
-def find_litho_port(description='SparkFun Pro Micro'):
-    """
-    Use the description of the SparkFun Pro Micro controller to find corresponding serial port.
-    """
-    ports = list_ports.comports(include_links=True)
-    if len(ports) > 0:
-        for p in ports:
-            if p.description == description:
-                print(f'Litho USB Port: {p.device}')
-                return p.device
-    raise Exception("Litho Controller not found. Check it is connected.")
+# Init LEDs Object.
+LEDs = LithographyController.LEDController()
+
 
 class MotorControllerQt(QWidget):
     """Class for connecting the motors to the UI"""
@@ -44,18 +33,11 @@ class MotorControllerQt(QWidget):
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
 
-        # set this here or find it every time you want to connect?
-        # No one is going to unplug it mid session. Right??? oh no.
-        self.litho_port = find_litho_port()
-
         # set values of spin boxes.
-        self._move_strength = 10 # um - (default) named this badly. Back when it was steps.
-        self._previous_exposure_time = 0 # record of last exposure time
-        self._uv_current = 10 # uv current (in spinbox, to be set)
-        self._uv_current_setting = 10 # mA - this is the value currently set
-        self._red_current = 10 # red current  (in spinbox, to be set)
-        self._red_current_setting = 30 # mA - this is the value currently set.
-        self._exposure_time = 0 # the setting in the spinbox (to be sent)
+        self._move_strength = 10  # um - (default) named this badly. Back when it was steps.
+        self._uv_current = 10  # uv current (in spinbox, to be set)
+        self._red_current = 10  # red current  (in spinbox, to be set)
+        self._exposure_time = 0  # the setting in the spinbox (to be sent)
 
         # Click actions
         # self.ui.DO_IT.clicked.connect(self.doit_method)
@@ -79,9 +61,9 @@ class MotorControllerQt(QWidget):
 
     def update_uv_light_on(self):
         if self.ui.UV_ON_CHECKBOX.isChecked():
-            self.litho_send("UV_T_SET, -1", read_output=False)
+            LEDs.expose(-1)
         else:
-            self.litho_send("UV_T_SET, 0", read_output=False)
+            LEDs.expose(0)
 
     def update_exposure_setting(self):
         """This is the spinbox ui value - the exposure time you want to use. """
@@ -100,107 +82,15 @@ class MotorControllerQt(QWidget):
 
     def expose(self):
         """UV light to turn on for set amount of time. Time pulled from UI."""
-        self.litho_send(f"UV_T_SET,{self._exposure_time}", exposure=True)
+        LEDs.expose(self._exposure_time)
         self.update_previous_expose_time_ui()
         return None
 
     def set_LED_currents(self):
         """set the currents on the LEDs (set both each time). """
-
-        self.litho_send(f"UV_I_SET,{self._uv_current}")
-        t = time.perf_counter()
-        self._uv_current_setting = self.get_uv_current()
-        print("time to get uv: ", time.perf_counter() - t)
-
-        t = time.perf_counter()
-        self.litho_send(f"RED_I_SET,{self._red_current}")
-        self._red_current_setting = self.get_uv_current()
-        print("time to set and get red: ",time.perf_counter() - t)
-
-        print("DONE")
+        LEDs.set_led_currents(self._uv_current, self._red_current)
         self.update_LED_settings_list()
         return None
-
-    def litho_send(self, message: str, read_output=False, exposure=False):
-        """
-        Connect to litho controller and send message.
-        if read_output is for getter commands.
-        if exposure is to switch off the ui while the exposure is happening.
-
-        :PARAMS:
-        =========== Command Summary ==========
-        <H,_>              : This help file
-        <RED_I_SET,VALUE>  : Set RED current to VALUE (mA)
-        <RED_I_GET,_>      : Get RED current (mA)
-        <UV_I_SET,VALUE>   : Set UV current to VALUE (mA)
-        <UV_I_GET,_>       : Get UV current (mA)
-        <UV_T_SET,VALUE>   : Set UV On Time to VALUE & turn on for value (secs)
-        <UV_T_GET,_>       : Get UV On Time (secs)
-        <CAM_SET,0>        : Disable camera
-        <CAM_SET,1>        : Enable camera
-        <CAM_GET,_>        : Query camera state
-        <ALL,0>            : Turn off both RED and UV
-
-        > Example: <RED_I_SET,100> to set RED current to 100mA
-        > Example: <UV_I_SET,200> to set UV current to 200mA
-        > Example: <CAM,1> to enable camera
-        > Example: <ALL,0> to turn off both RED and UV
-
-        Baudrate doesn't matter
-
-        :OUTPUT:
-        str: *txt* value *txt* .split(' ')[-2] to access value.
-        """
-
-        with Serial(self.litho_port, baudrate=9600, timeout=1) as s:
-
-            s.write(f"<{message}>".encode())
-            # time.sleep(0.1)
-            if exposure:
-                # I should deactivate all UI for this while loop.
-                self.setEnabled(False)
-
-                # wait max 5 mins for a finished resopnse.
-                read_timeout = 300
-                start_time = time.perf_counter()
-                while time.perf_counter() - start_time < read_timeout:
-                    time.sleep(1)
-                    msg = s.readline().decode()
-                    if msg == "FIN":
-                        self.setEnabled(True)
-                        self.update_previous_expose_time_ui()
-                        break
-                # And reactivate UI here after it has recieved the FIN message.
-                self.setEnabled(True)
-                print("Exposure timeout reached. Exiting. Light should also switch off. ")
-
-            if read_output:
-                start_time = time.perf_counter()
-                while time.perf_counter() - start_time < 5:
-                    # awaiting response, if not found return error.
-                    if s.in_waiting > 0:
-                        msg = s.readline().decode()
-                        print(msg)
-                        return msg
-                return "Not data found. ERROR "
-            else:
-                return None
-
-
-    def get_last_exposure_time(self):
-        """replace with correct getter syntax."""
-        t = self.litho_send("UV_T_GET,0", read_output=True)
-        return t.split(' ')[-2]
-
-    def get_uv_current(self):
-        """replace with correct getter syntax."""
-        x = self.litho_send("UV_I_GET,0", read_output=True)
-        return x.split(' ')[-2]
-
-    def get_red_current(self):
-        """replace with correct getter syntax."""
-        y = self.litho_send("RED_I_GET,0", read_output=True)
-        return y.split(' ')[-2]
 
     def update_LED_settings_list(self):
         """Update the list widget with the LED current settings. These are pulled from the UV controller."""
@@ -208,15 +98,7 @@ class MotorControllerQt(QWidget):
         self.ui.LED_SETTINGS_BOX.clear()
         self.ui.LED_SETTINGS_BOX.addItem("LED Settings:")
 
-        t = time.perf_counter()
-
-        uv_led_current_setting = self.get_uv_current()
-        print("time taken UV:", time.perf_counter() - t)
-
-        t = time.perf_counter()
-
-        red_led_current_setting = self.get_red_current()
-        print("time taken RED:", time.perf_counter() - t)
+        uv_led_current_setting, red_led_current_setting = LEDs.get_led_currents()
 
         self.ui.LED_SETTINGS_BOX.addItem(f"UV: \t {uv_led_current_setting} mA")
         self.ui.LED_SETTINGS_BOX.addItem(f"RED:\t {red_led_current_setting} mA")
@@ -225,8 +107,7 @@ class MotorControllerQt(QWidget):
 
     def update_previous_expose_time_ui(self):
         """Ask the UV controller for the stored value for last exposure time. Set it on the UI."""
-        _exp_time_string = self.get_last_exposure_time()
-        self.ui.PREVIOUS_EXPOSURE_TIME_.setText(f"Last exposure time: {_exp_time_string} s")
+        self.ui.PREVIOUS_EXPOSURE_TIME_.setText(f"Last exposure time: {LEDs.get_last_exposure_time()} s")
         return None
 
     def update_move_strength(self):

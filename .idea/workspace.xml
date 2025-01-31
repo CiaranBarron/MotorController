@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="381a2188-9b45-4119-b5a7-b4bb57828477" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/MotorController.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MotorController.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MotorControllerUI/motorcontrollerqt_1.5.py" beforeDir="false" afterPath="$PROJECT_DIR$/MotorControllerUI/motorcontrollerqt_1.5.py" afterDir="false" />
-    </list>
+    <list default="true" id="381a2188-9b45-4119-b5a7-b4bb57828477" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -213,7 +208,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1724154914584</updated>
-      <workItem from="1738168510182" duration="6965000" />
+      <workItem from="1738168510182" duration="7264000" />
     </task>
     <servers />
   </component>
