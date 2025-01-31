@@ -19,6 +19,57 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QLabel,
     QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton,
     QSizePolicy, QSpinBox, QTextEdit, QWidget)
 
+from PySide6.QtGui import Qt
+from PySide6 import QtGui
+from PySide6.QtCore import QRectF
+
+class MySwitch(QPushButton):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        print('init')
+        self.setCheckable(True)
+        self.setMinimumWidth(66)
+        self.setMinimumHeight(22)
+
+    def paintEvent(self, event, force_on=False, force_off=False):
+
+        label = "ON" if self.isChecked() else "OFF"
+        bg_color = Qt.green if self.isChecked() else Qt.red
+
+        if force_on:
+            label = "ON"
+            bg_color=Qt.green
+        if force_off:
+            label="OFF"
+            bg_color=Qt.red
+
+        radius = 10
+        width = 32
+        center = self.rect().center()
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.translate(center)
+        painter.setBrush(QtGui.QColor(0,0,0))
+
+        pen = QtGui.QPen(Qt.black)
+        pen.setWidth(2)
+        painter.setPen(pen)
+
+        painter.drawRoundedRect(QRect(-width, -radius, 2*width, 2*radius), radius, radius)
+        painter.setBrush(QtGui.QBrush(bg_color))
+        sw_rect = QRect(-radius, -radius, width + radius, 2*radius)
+
+        if not (force_on or force_off):
+            if not self.isChecked():
+                sw_rect.moveLeft(-width)
+        elif force_on:
+            sw_rect.moveLeft(-width)
+
+        painter.drawRoundedRect(sw_rect, radius, radius)
+        painter.drawText(sw_rect, Qt.AlignCenter, label)
+
+
 class Ui_Dialog_MotorController(object):
     def setupUi(self, Dialog_MotorController):
         if not Dialog_MotorController.objectName():
@@ -65,9 +116,9 @@ class Ui_Dialog_MotorController(object):
         self.HOME_CONOR = QPushButton(Dialog_MotorController)
         self.HOME_CONOR.setObjectName(u"HOME_CONOR")
         self.HOME_CONOR.setGeometry(QRect(25, 130, 171, 32))
-        self.UV_ON_CHECKBOX = QCheckBox(Dialog_MotorController)
+        self.UV_ON_CHECKBOX = MySwitch(Dialog_MotorController)
         self.UV_ON_CHECKBOX.setObjectName(u"UV_ON_CHECKBOX")
-        self.UV_ON_CHECKBOX.setGeometry(QRect(230, 430, 81, 20))
+        self.UV_ON_CHECKBOX.setGeometry(QRect(260, 460, 81, 20))
         self.EXPOSURE_TIME_SETTING = QSpinBox(Dialog_MotorController)
         self.EXPOSURE_TIME_SETTING.setObjectName(u"EXPOSURE_TIME_SETTING")
         self.EXPOSURE_TIME_SETTING.setGeometry(QRect(25, 280, 60, 30))
@@ -108,6 +159,9 @@ class Ui_Dialog_MotorController(object):
         QListWidgetItem(self.listWidget)
         self.listWidget.setObjectName(u"listWidget")
         self.listWidget.setGeometry(QRect(20, 170, 200, 61))
+        self.label_7 = QLabel(Dialog_MotorController)
+        self.label_7.setObjectName(u"label_7")
+        self.label_7.setGeometry(QRect(270, 440, 49, 16))
 
         self.retranslateUi(Dialog_MotorController)
 
@@ -169,5 +223,6 @@ class Ui_Dialog_MotorController(object):
         ___qlistwidgetitem3.setText(QCoreApplication.translate("Dialog_MotorController", u"Motor Position:", None));
         self.listWidget.setSortingEnabled(__sortingEnabled1)
 
+        self.label_7.setText(QCoreApplication.translate("Dialog_MotorController", u"UV Light", None))
     # retranslateUi
 

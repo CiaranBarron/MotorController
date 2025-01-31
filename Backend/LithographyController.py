@@ -44,11 +44,26 @@ class LEDController:
 
         # On init find the port the board is connected to.
         self._port = self.find_leds_port()
+        self._cam_check()
 
     def _cam_set(self, on=True):
         """Switch on the relay powering the camera and LEDs"""
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
             ser.write(f"<CAM_SET, {1 if on else 0}>\n".encode())
+
+    def _cam_check(self):
+        """check the relay is on and switch it on if not. else continue"""
+        with Serial(self._port, baudrate=9600, timeout=1) as ser:
+            ser.write(f"<CAM_CHECK, 0>\n".encode())
+
+            t = time.perf_counter()
+            while time.perf_counter() - t < 2:
+                if ser.in_waiting:
+                    state = ser.readline().decode()
+
+        if "Enabled" not in state:
+            print("Turning on camera. ")
+            self._cam_set()
 
     def find_leds_port(self):
         """Use the description of the SparkFun Pro Micro controller to find corresponding serial port."""

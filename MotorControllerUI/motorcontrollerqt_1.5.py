@@ -7,7 +7,10 @@ import time
 from serial import Serial
 from serial.tools import list_ports
 
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QWidget, QPushButton
+from PySide6.QtGui import Qt
+from PySide6 import QtGui
+from PySide6.QtCore import QRectF
 
 from ui_form_1p5 import Ui_Dialog_MotorController
 
@@ -24,6 +27,8 @@ s_id = "FT7AX5XQA"  # Serial number for motor controller board.
 
 # Init LEDs Object.
 LEDs = LithographyController.LEDController()
+
+
 
 class MotorControllerQt(QWidget):
     """Class for connecting the motors to the UI"""
@@ -53,7 +58,8 @@ class MotorControllerQt(QWidget):
         self.ui.RED_CURRENT_SETTING.valueChanged.connect(self.update_red_current_setting)
         self.ui.UV_CURRENT_SETTING.valueChanged.connect(self.update_uv_current_setting)
         self.ui.EXPOSURE_TIME_SETTING.valueChanged.connect(self.update_exposure_setting)
-        self.ui.UV_ON_CHECKBOX.stateChanged.connect(self.update_uv_light_on)
+        self.ui.UV_ON_CHECKBOX.clicked.connect(self.update_uv_light_on)
+
         # Update on open with current settings.
         self.update_LED_settings_list()
         self.update_previous_expose_time_ui()
@@ -81,7 +87,13 @@ class MotorControllerQt(QWidget):
 
     def expose(self):
         """UV light to turn on for set amount of time. Time pulled from UI."""
+
+        assert self.ui.UV_ON_CHECKBOX.isChecked() == False, "UV already on. Must be off to time exposure"
+        # self.ui.UV_ON_CHECKBOX.blockSignals(True)
+        self.ui.UV_ON_CHECKBOX.paintEvent(1, force_on=True)
         LEDs.expose(self._exposure_time)
+        self.ui.UV_ON_CHECKBOX.paintEvent(1, force_off=True)
+        # self.ui.UV_ON_CHECKBOX.blockSignals(False)
         self.update_previous_expose_time_ui()
         return None
 
