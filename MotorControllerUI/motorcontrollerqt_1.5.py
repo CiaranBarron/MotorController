@@ -18,6 +18,15 @@ sys.path.insert(1, '../Backend')
 from Backend.Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
 from Backend import LithographyController
 
+# Basic stylesheet structure
+stylesheet = """
+    /* Widget name */
+    QWidget {
+        background-color: #ffffff;
+        color: #000000;
+    }
+"""
+
 y_id = 842400280    # Motor id for y motion
 x_id = 842400780    # Motor id for x motion
 s_id = "FT7AX5XQA"  # Serial number for motor controller board.
@@ -31,6 +40,8 @@ class MotorControllerQt(QWidget):
         super().__init__(parent)
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
+
+        self.setStyleSheet(stylesheet)
 
         # set values of spin boxes.
         self._move_strength = 10  # um - (default) named this badly. Back when it was steps.
