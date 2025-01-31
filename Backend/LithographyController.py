@@ -28,10 +28,10 @@ class LEDController:
     > Example: <CAM,1> to enable camera
     > Example: <ALL,0> to turn off both RED and UV
     """
-    def __init__(self, board_description='SparkFun Pro Micro'):
+    def __init__(self):
 
         # Variables for description of controller board and the port the LED controller is connected to.
-        self._board_description = board_description
+        self._board_description = 'SparkFun Pro Micro'
         self._serial_number = "5&10DC9A0C&0&4"
         self._port = False
 
@@ -46,6 +46,7 @@ class LEDController:
         self._port = self.find_leds_port()
 
     def _cam_set(self, on=True):
+        """Switch on the relay powering the camera and LEDs"""
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
             ser.write(f"<CAM_SET, {1 if on else 0}>\n".encode())
 
@@ -60,6 +61,7 @@ class LEDController:
         raise Exception("Litho Controller not found. Check it is connected.")
 
     def show_port(self):
+        """return the port the LED controller is connected to"""
         return self._port
 
     def set_led_currents(self, uv, red):
@@ -93,7 +95,7 @@ class LEDController:
         return self._uv_current, self._red_current
 
     def get_last_exposure_time(self):
-
+        """return the exposure time of the last exposure (stored on controller - not power persistent)"""
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
             ser.write(f"<UV_T_GET,0>\n".encode())
             start_time = time.perf_counter()
@@ -127,6 +129,7 @@ class LEDController:
 
 
     def turn_off_leds(self):
+        """switch off power relay for camera and LED controller."""
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
             ser.write(f"<ALL,0>\n".encode())
 
