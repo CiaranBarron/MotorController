@@ -25,16 +25,13 @@ s_id = "FT7AX5XQA"  # Serial number for motor controller board.
 # Init LEDs Object.
 LEDs = LithographyController.LEDController()
 
-print("here")
 class MotorControllerQt(QWidget):
     """Class for connecting the motors to the UI"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        print('h1')
         self.ui = Ui_Dialog_MotorController()
-        print('h2')
         self.ui.setupUi(self)
-        print('h3')
+
         # set values of spin boxes.
         self._move_strength = 10  # um - (default) named this badly. Back when it was steps.
         self._uv_current = 10  # uv current (in spinbox, to be set)
@@ -56,14 +53,15 @@ class MotorControllerQt(QWidget):
         self.ui.RED_CURRENT_SETTING.valueChanged.connect(self.update_red_current_setting)
         self.ui.UV_CURRENT_SETTING.valueChanged.connect(self.update_uv_current_setting)
         self.ui.EXPOSURE_TIME_SETTING.valueChanged.connect(self.update_exposure_setting)
-        self.ui.UV_ON_CHECKBOX.stateChanged.connect(self.update_uv_light_on())
+        self.ui.UV_ON_CHECKBOX.stateChanged.connect(self.update_uv_light_on)
         # Update on open with current settings.
-        # self.update_LED_settings_list()
-        # self.update_previous_expose_time_ui()
+        self.update_LED_settings_list()
+        self.update_previous_expose_time_ui()
 
     def update_uv_light_on(self):
         """toggle uv light"""
-        LEDs.expose(-1 if self.ui.UV_ON_CHECKBOX.isChecked() else 0)
+        light_state = -1 if self.ui.UV_ON_CHECKBOX.isChecked() else 0
+        LEDs.switchUV(light_state)
 
 
     def update_exposure_setting(self):
@@ -203,10 +201,8 @@ class MotorControllerQt(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    print("here2")
     widget = MotorControllerQt()
-    print("here3")
     widget.show()
-    print("here4")
+
     sys.exit(app.exec())
 

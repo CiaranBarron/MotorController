@@ -120,6 +120,11 @@ class LEDController:
                     ser.readline().decode()
                     break
 
+    def switchUV(self, state):
+        """turn the UV light or off"""
+        with Serial(self._port, baudrate=9600, timeout=1) as ser:
+            ser.write(f"<UV_T_SET,{state}>\n".encode())
+
 
     def turn_off_leds(self):
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
@@ -163,6 +168,6 @@ if __name__ == '__main__':
     st4 = time.perf_counter()
     leds.get_last_exposure_time()
 
-    print(f"Time to get las exposure time: {round(1000 * (time.perf_counter() - st4), 1)} ms")
+    print(f"Time to get last exposure time: {round(1000 * (time.perf_counter() - st4), 1)} ms")
     # turn off power to the leds.
     leds._cam_set(on=False)
