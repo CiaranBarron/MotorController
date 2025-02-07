@@ -26,7 +26,6 @@ from PySide6.QtCore import QRectF
 class MySwitch(QPushButton):
     def __init__(self, parent = None):
         super().__init__(parent)
-        print('init')
         self.setCheckable(True)
         self.setMinimumWidth(66)
         self.setMinimumHeight(22)
@@ -80,6 +79,7 @@ class Ui_Dialog_MotorController(object):
         self.EXPOSE.setGeometry(QRect(250, 280, 100, 31))
         self.MOVE_MOTORS_ARROW_SETTING = QSpinBox(Dialog_MotorController)
         self.MOVE_MOTORS_ARROW_SETTING.setObjectName(u"MOVE_MOTORS_ARROW_SETTING")
+        self.MOVE_MOTORS_ARROW_SETTING.setSuffix(u" μm")
         self.MOVE_MOTORS_ARROW_SETTING.setGeometry(QRect(25, 80, 60, 30))
         self.MOVE_MOTORS_ARROW_SETTING.setMaximum(1000)
         self.MOVE_MOTORS_ARROW_SETTING.setValue(10)
@@ -110,9 +110,7 @@ class Ui_Dialog_MotorController(object):
         self.HOME = QPushButton(Dialog_MotorController)
         self.HOME.setObjectName(u"HOME")
         self.HOME.setGeometry(QRect(250, 200, 100, 30))
-        self.X_POS_4 = QPlainTextEdit(Dialog_MotorController)
-        self.X_POS_4.setObjectName(u"X_POS_4")
-        self.X_POS_4.setGeometry(QRect(100, 80, 70, 30))
+
         self.HOME_CONOR = QPushButton(Dialog_MotorController)
         self.HOME_CONOR.setObjectName(u"HOME_CONOR")
         self.HOME_CONOR.setGeometry(QRect(25, 130, 171, 32))
@@ -169,7 +167,7 @@ class Ui_Dialog_MotorController(object):
     # setupUi
 
     def retranslateUi(self, Dialog_MotorController):
-        Dialog_MotorController.setWindowTitle(QCoreApplication.translate("Dialog_MotorController", u"Dialog", None))
+        Dialog_MotorController.setWindowTitle(QCoreApplication.translate("Dialog_MotorController", u"Motor & LED Controller", None))
         self.EXPOSE.setText(QCoreApplication.translate("Dialog_MotorController", u"Expose", None))
         self.DOWN.setText(QCoreApplication.translate("Dialog_MotorController", u"DOWN", None))
 #if QT_CONFIG(shortcut)
@@ -205,8 +203,7 @@ class Ui_Dialog_MotorController(object):
         self.RIGHT.setShortcut(QCoreApplication.translate("Dialog_MotorController", u"Right", None))
 #endif // QT_CONFIG(shortcut)
         self.HOME.setText(QCoreApplication.translate("Dialog_MotorController", u"HOME", None))
-        self.X_POS_4.setPlainText(QCoreApplication.translate("Dialog_MotorController", u"um\n"
-"", None))
+
         self.HOME_CONOR.setText(QCoreApplication.translate("Dialog_MotorController", u"Home - but only for Conor", None))
         self.UV_ON_CHECKBOX.setText(QCoreApplication.translate("Dialog_MotorController", u"UV light on", None))
         self.label.setText(QCoreApplication.translate("Dialog_MotorController", u"Seconds", None))

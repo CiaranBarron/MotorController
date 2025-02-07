@@ -2,15 +2,8 @@
 # Ciaran Barron 31.01.25
 
 import sys
-import time
 
-from serial import Serial
-from serial.tools import list_ports
-
-from PySide6.QtWidgets import QApplication, QWidget, QPushButton
-from PySide6.QtGui import Qt
-from PySide6 import QtGui
-from PySide6.QtCore import QRectF
+from PySide6.QtWidgets import QApplication, QWidget
 
 from ui_form_1p5 import Ui_Dialog_MotorController
 
@@ -19,16 +12,23 @@ sys.path.insert(1, '../Backend')
 
 # ignore this error. The path insert solves it.
 from Backend.Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
-from Backend import LithographyController
+from Backend.LithographyController import LEDController
+
+# Basic stylesheet structure
+stylesheet = """
+    /* Widget name */
+    QWidget {
+        background-color: #ffffff;
+        color: #000000;
+    }
+"""
 
 y_id = 842400280    # Motor id for y motion
 x_id = 842400780    # Motor id for x motion
 s_id = "FT7AX5XQA"  # Serial number for motor controller board.
 
 # Init LEDs Object.
-LEDs = LithographyController.LEDController()
-
-
+LEDs = LEDController()
 
 class MotorControllerQt(QWidget):
     """Class for connecting the motors to the UI"""
@@ -37,11 +37,13 @@ class MotorControllerQt(QWidget):
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
 
+        self.setStyleSheet(stylesheet)
+
         # set values of spin boxes.
         self._move_strength = 10  # um - (default) named this badly. Back when it was steps.
         self._uv_current = 10  # uv current (in spinbox, to be set)
         self._red_current = 10  # red current  (in spinbox, to be set)
-        self._exposure_time = 0  # the setting in the spinbox (to be sent)
+        self._exposure_time = 10  # the setting in the spinbox (to be sent)
 
         # Click actions
         # self.ui.DO_IT.clicked.connect(self.doit_method)

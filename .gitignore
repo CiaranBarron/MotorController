@@ -5,3 +5,5 @@ Backend/MotorPositions.bin
 __pycache__/*
 *.autosave_init__.py
 .DS_Store
+Build/*
+.motor_litho_env/*

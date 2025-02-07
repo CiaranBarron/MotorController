@@ -43,8 +43,8 @@ class LEDController:
         self._last_exposure = 0
 
         # On init find the port the board is connected to.
-        self._port = self.find_leds_port()
-        self._cam_check()
+        # self._port = self.find_leds_port()
+
 
     def _cam_set(self, on=True):
         """Switch on the relay powering the camera and LEDs"""
@@ -54,7 +54,7 @@ class LEDController:
     def _cam_check(self):
         """check the relay is on and switch it on if not. else continue"""
         with Serial(self._port, baudrate=9600, timeout=1) as ser:
-            ser.write(f"<CAM_CHECK, 0>\n".encode())
+            ser.write(f"<CAM_GET, 0>\n".encode())
 
             t = time.perf_counter()
             while time.perf_counter() - t < 2:
