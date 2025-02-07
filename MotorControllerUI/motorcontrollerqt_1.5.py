@@ -23,6 +23,15 @@ stylesheet = """
     }
 """
 
+# Basic stylesheet structure
+stylesheet = """
+    /* Widget name */
+    QWidget {
+        background-color: #ffffff;
+        color: #000000;
+    }
+"""
+
 y_id = 842400280    # Motor id for y motion
 x_id = 842400780    # Motor id for x motion
 s_id = "FT7AX5XQA"  # Serial number for motor controller board.
