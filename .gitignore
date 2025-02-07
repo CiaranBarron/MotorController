@@ -7,3 +7,5 @@ __pycache__/*
 .DS_Store
 Build/*
 .motor_litho_env/*
+Backend/__pycache__/*
+MotorControllerUI/__pycache__/*
