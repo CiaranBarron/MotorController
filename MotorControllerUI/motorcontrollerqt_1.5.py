@@ -8,29 +8,11 @@ from PySide6.QtWidgets import QApplication, QWidget
 from ui_form_1p5 import Ui_Dialog_MotorController
 
 # This line allows the file to see back up one directory because I have the motor control script in a different folder.
-sys.path.insert(1, '../Backend')
+# sys.path.insert(1, '../Backend')
 
 # ignore this error. The path insert solves it.
 from Backend.Electronic_Modules.Koco_Linear_Actuator.linearmotor_comms import LinearMotor
 from Backend.LithographyController import LEDController
-
-# Basic stylesheet structure
-stylesheet = """
-    /* Widget name */
-    QWidget {
-        background-color: #ffffff;
-        color: #000000;
-    }
-"""
-
-# Basic stylesheet structure
-stylesheet = """
-    /* Widget name */
-    QWidget {
-        background-color: #ffffff;
-        color: #000000;
-    }
-"""
 
 y_id = 842400280    # Motor id for y motion
 x_id = 842400780    # Motor id for x motion
@@ -46,13 +28,13 @@ class MotorControllerQt(QWidget):
         self.ui = Ui_Dialog_MotorController()
         self.ui.setupUi(self)
 
-        self.setStyleSheet(stylesheet)
-
         # set values of spin boxes.
         self._move_strength = 10  # um - (default) named this badly. Back when it was steps.
         self._uv_current = 10  # uv current (in spinbox, to be set)
         self._red_current = 10  # red current  (in spinbox, to be set)
         self._exposure_time = 10  # the setting in the spinbox (to be sent)
+        self._abs_x_pos = 10 # The absolute x pos you want to go to.
+        self._abs_y_pos = 10 # The absolute y pos you want to go to.
 
         # Click actions
         # self.ui.DO_IT.clicked.connect(self.doit_method)
@@ -70,10 +52,29 @@ class MotorControllerQt(QWidget):
         self.ui.UV_CURRENT_SETTING.valueChanged.connect(self.update_uv_current_setting)
         self.ui.EXPOSURE_TIME_SETTING.valueChanged.connect(self.update_exposure_setting)
         self.ui.UV_ON_CHECKBOX.clicked.connect(self.update_uv_light_on)
+        self.ui.ABS_X.valueChanged.connect(self.update_abs_x)
+        self.ui.ABS_Y.valueChanged.connect(self.update_abs_y)
+        self.ui.MOVE.clicked.connect(self.move_abs)
 
         # Update on open with current settings.
         self.update_LED_settings_list()
         self.update_previous_expose_time_ui()
+
+    def move_abs(self):
+        """Move button will call internal method to send abs positions to motors. I had already written the abs move func just forgot to add buttons."""
+
+        self._move(self._abs_x_pos, self._abs_y_pos)
+
+        return 0
+
+    def update_abs_x(self):
+        """update the absolute y position when the spinbox is changed."""
+        self._abs_x_pos = self.ui.ABS_X.value()
+
+
+    def update_abs_y(self):
+        """update the absolute x position when the spinbox is changed."""
+        self._abs_y_pos = self.ui.ABS_Y.value()
 
     def update_uv_light_on(self):
         """toggle uv light"""
@@ -162,7 +163,7 @@ class MotorControllerQt(QWidget):
         self.update_list_widget_with_position()
 
     def update_list_widget_with_position(self):
-
+        """update the position of the motors (in um)"""
         self.ui.listWidget.clear()
 
         with LinearMotor(serial_number=s_id) as lm:
@@ -216,11 +217,10 @@ class MotorControllerQt(QWidget):
             new_x = lm.steps2micron(lm.get_position(x_id))
             new_y = lm.steps2micron(lm.get_position(y_id))
 
-            assert new_x - x > delta_pos, "Error: x position deviated by more than 10 steps"
-            assert new_y - y > delta_pos, "Error: y position deviated by more than 10 steps"
+            # assert new_x - x > delta_pos, "Error: x position deviated by more than 10 steps"
+            # assert new_y - y > delta_pos, "Error: y position deviated by more than 10 steps"
 
             print(f"Motors moved to: {new_x, new_y}")
-
 
         self.update_list_widget_with_position()
 

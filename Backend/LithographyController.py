@@ -43,7 +43,7 @@ class LEDController:
         self._last_exposure = 0
 
         # On init find the port the board is connected to.
-        # self._port = self.find_leds_port()
+        self._port = self.find_leds_port()
 
 
     def _cam_set(self, on=True):

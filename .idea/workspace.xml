@@ -33,32 +33,34 @@
     <option name="showLibraryContents" value="true" />
     <option name="showMembers" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.LithoMotors.executor&quot;: &quot;Run&quot;,
-    &quot;Python.LithographyController.executor&quot;: &quot;Run&quot;,
-    &quot;Python.SerialDeviceBase.executor&quot;: &quot;Run&quot;,
-    &quot;Python.motorcontrollerqt.executor&quot;: &quot;Run&quot;,
-    &quot;Python.motorcontrollerqt_1.5.executor&quot;: &quot;Run&quot;,
-    &quot;Python.motorcontrollerqt_2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.motorcontrollerqt_3.executor&quot;: &quot;Run&quot;,
-    &quot;Python.motorcontrollerqt_4.executor&quot;: &quot;Run&quot;,
-    &quot;Python.ui_form_1p5.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/LMA10/Documents/MotorController&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.LithoMotors.executor": "Run",
+    "Python.LithographyController.executor": "Debug",
+    "Python.SerialDeviceBase.executor": "Run",
+    "Python.motorcontrollerqt.executor": "Run",
+    "Python.motorcontrollerqt_1.5.executor": "Run",
+    "Python.motorcontrollerqt_2.executor": "Run",
+    "Python.motorcontrollerqt_3.executor": "Run",
+    "Python.motorcontrollerqt_4.executor": "Run",
+    "Python.setup.executor": "Run",
+    "Python.ui_form_1p5.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/LMA10/Documents/MotorController/.motor_litho_env/Scripts",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\LMA10\Documents\MotorController\MotorControllerUI\" />
       <recent name="C:\Users\LMA10\Documents\MotorController\MotorControllerUI" />
       <recent name="C:\Users\LMA10\Documents\PCOEdgeGUI-Litho" />
       <recent name="C:\Users\LMA10\Documents\MotorController\Backend\StepperMotorEEPROMStorage" />
@@ -67,7 +69,7 @@
       <recent name="C:\Users\LMA10\Documents\MotorController\Backend" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.LithographyController">
+  <component name="RunManager">
     <configuration name="LithoMotors" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MotorController" />
       <option name="ENV_FILES" value="" />
@@ -152,6 +154,28 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/MotorControllerUI/motorcontrollerqt.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="motorcontrollerqt_1.5" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="MotorController" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/MotorControllerUI" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/MotorControllerUI/motorcontrollerqt_1.5.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
