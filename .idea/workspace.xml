@@ -36,7 +36,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.LithoMotors.executor": "Run",
-    "Python.LithographyController.executor": "Debug",
+    "Python.LithographyController.executor": "Run",
     "Python.SerialDeviceBase.executor": "Run",
     "Python.motorcontrollerqt.executor": "Run",
     "Python.motorcontrollerqt_1.5.executor": "Run",
